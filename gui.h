@@ -21,6 +21,6 @@ void tech_tree(const int size, struct Civs* CivS, struct CXY* XY, WINDOW* Techno
 void technology(const int size, struct Civs* CivS, int tech, struct CXY* XY, WINDOW* Technologies);
 
 // takes coordinates and return which function(mechanic) need to lauch
-int click_action(const int size, const int x, const int y, struct CXY* XY, struct Civs* CivS, WINDOW* Technologies);
+int click_action(const int size, const int x, const int y, struct CXY* XY, struct Civs* CivS, WINDOW* Technologies, MEVENT* event, struct ClicK* Click);
 
 #endif // GUI_H

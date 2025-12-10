@@ -403,6 +403,22 @@ struct Civs* ReturnCiv(struct Civs* CivS, int number) {
    return CV;
 }
 
+struct Units* ReturnUnit(struct Civs* CivS, const int x, const int y) {
+   struct Civs* CV = CivS;
+   struct Units* UN = CV->Unites;
+   while (CV!=NULL) {
+      while (UN!=NULL) {
+         if (UN->x == x && UN->y == y) {
+            return UN;
+         }
+         UN = UN->next;
+      }
+      CV = CV->next;
+   }
+   return UN; 
+
+}
+
 void new_Unit(struct Units** head, int number, int x, int y, int type) {
    struct Units* newUnit = malloc(sizeof(struct Units));
    if (!newUnit) return;
@@ -682,4 +698,277 @@ void civs_creation(const int size, int** world, struct Civs** CivS, int CIV) {
          }
       }
    }
+}
+
+
+//-----------------------------------------------
+// Research
+//-----------------------------------------------
+
+
+void Research(struct Civs* CivS, int tech) {
+   switch(tech) {
+
+      //------------------------------------------------
+      // Branch 1
+      //------------------------------------------------
+
+
+      case 7: 
+         if (CivS->Tech.branch1.Archery == false && CivS->Tech.branch1.Hunting == true && CivS->stars >= CivS->Tech.Tier2) {
+             CivS->Tech.branch1.Archery = true;
+             CivS->stars -= CivS->Tech.Tier2;
+         }
+         break;
+      case 8: 
+         if (CivS->Tech.branch1.Spiritualizm == false && CivS->Tech.branch1.Archery == true && CivS->stars >= CivS->Tech.Tier3) {
+             CivS->Tech.branch1.Spiritualizm = true;
+             CivS->stars -= CivS->Tech.Tier3;
+         }
+         break;
+      case 9: 
+         if (CivS->Tech.branch1.Hunting == false && CivS->stars >= CivS->Tech.Tier1) {
+             CivS->Tech.branch1.Hunting = true;
+             CivS->stars -= CivS->Tech.Tier1;
+         }
+         break;
+      case 10: 
+         if (CivS->Tech.branch1.Forestry == false && CivS->Tech.branch1.Hunting == true && CivS->stars >= CivS->Tech.Tier2) {
+             CivS->Tech.branch1.Forestry = true;
+             CivS->stars -= CivS->Tech.Tier2;
+         }
+         break;
+      case 11: 
+         if (CivS->Tech.branch1.Mathematics == false && CivS->Tech.branch1.Forestry == true && CivS->stars >= CivS->Tech.Tier3) {
+             CivS->Tech.branch1.Mathematics = true;
+             CivS->stars -= CivS->Tech.Tier3;
+         }
+         break;
+
+
+      //------------------------------------------------
+      // Branch 2
+      //------------------------------------------------
+
+
+      case 12: 
+         if (CivS->Tech.branch2.Roads == false && CivS->Tech.branch2.Riding == true && CivS->stars >= CivS->Tech.Tier2) {
+             CivS->Tech.branch2.Roads = true;
+             CivS->stars -= CivS->Tech.Tier2;
+         }
+         break;
+      case 13: 
+         if (CivS->Tech.branch2.Trade == false && CivS->Tech.branch2.Roads == true && CivS->stars >= CivS->Tech.Tier3) {
+             CivS->Tech.branch2.Trade = true;
+             CivS->stars -= CivS->Tech.Tier3;
+         }
+         break;
+      case 14: 
+         if (CivS->Tech.branch2.Riding == false && CivS->stars >= CivS->Tech.Tier1) {
+             CivS->Tech.branch2.Riding = true;
+             CivS->stars -= CivS->Tech.Tier1;
+         }
+         break;
+      case 15: 
+         if (CivS->Tech.branch2.Free_Spirit == false && CivS->Tech.branch2.Riding == true && CivS->stars >= CivS->Tech.Tier2) {
+             CivS->Tech.branch2.Free_Spirit = true;
+             CivS->stars -= CivS->Tech.Tier2;
+         }
+         break;
+      case 16: 
+         if (CivS->Tech.branch2.Chivalry == false && CivS->Tech.branch2.Free_Spirit == true && CivS->stars >= CivS->Tech.Tier3) {
+             CivS->Tech.branch2.Chivalry = true;
+             CivS->stars -= CivS->Tech.Tier3;
+         }
+         break;
+
+
+      //------------------------------------------------
+      // Branch 3
+      //------------------------------------------------
+
+
+      case 17: 
+         if (CivS->Tech.branch3.Farming == false && CivS->Tech.branch3.Organization && CivS->stars >= CivS->Tech.Tier2) {
+             CivS->Tech.branch3.Farming = true;
+             CivS->stars -= CivS->Tech.Tier2;
+         }
+         break;
+      case 18: 
+         if (CivS->Tech.branch3.Construction == false && CivS->Tech.branch3.Farming && CivS->stars >= CivS->Tech.Tier3) {
+             CivS->Tech.branch3.Construction = true;
+             CivS->stars -= CivS->Tech.Tier3;
+         }
+         break;
+      case 19: 
+         if (CivS->Tech.branch3.Organization == false && CivS->stars >= CivS->Tech.Tier1) {
+             CivS->Tech.branch3.Organization = true;
+             CivS->stars -= CivS->Tech.Tier1;
+         }
+         break;
+      case 20: 
+         if (CivS->Tech.branch3.Strategy == false && CivS->Tech.branch3.Organization && CivS->stars >= CivS->Tech.Tier2) {
+             CivS->Tech.branch3.Strategy = true;
+             CivS->stars -= CivS->Tech.Tier2;
+         }
+         break;
+      case 21: 
+         if (CivS->Tech.branch3.Diplomacy == false && CivS->Tech.branch3.Strategy && CivS->stars >= CivS->Tech.Tier3) {
+             CivS->Tech.branch3.Diplomacy = true;
+             CivS->stars -= CivS->Tech.Tier3;
+         }
+         break;
+
+      
+      //------------------------------------------------
+      // Branch 4
+      //------------------------------------------------
+
+
+      case 22: 
+         if (CivS->Tech.branch4.Mining == false && CivS->Tech.branch4.Climbing && CivS->stars >= CivS->Tech.Tier2) {
+             CivS->Tech.branch4.Mining = true;
+             CivS->stars -= CivS->Tech.Tier2;
+         }
+         break;
+      case 23: 
+         if (CivS->Tech.branch4.Smithery == false && CivS->Tech.branch4.Mining && CivS->stars >= CivS->Tech.Tier3) {
+             CivS->Tech.branch4.Smithery = true;
+             CivS->stars -= CivS->Tech.Tier3;
+         }
+         break;
+      case 24: 
+         if (CivS->Tech.branch4.Climbing == false && CivS->stars >= CivS->Tech.Tier1) {
+             CivS->Tech.branch4.Climbing = true;
+             CivS->stars -= CivS->Tech.Tier1;
+         }
+         break;
+      case 25: 
+         if (CivS->Tech.branch4.Meditation == false && CivS->Tech.branch4.Climbing && CivS->stars >= CivS->Tech.Tier2) {
+             CivS->Tech.branch4.Meditation = true;
+             CivS->stars -= CivS->Tech.Tier2;
+         }
+         break;
+      case 26: 
+         if (CivS->Tech.branch4.Philosophy == false && CivS->Tech.branch4.Meditation && CivS->stars >= CivS->Tech.Tier3) {
+             CivS->Tech.branch4.Philosophy = true;
+             CivS->stars -= CivS->Tech.Tier3;
+         }
+         break;
+
+
+      //------------------------------------------------
+      // Branch 5
+      //------------------------------------------------
+
+
+      case 27: 
+         if (CivS->Tech.branch5.Ramming == false && CivS->Tech.branch5.Fishing == true && CivS->stars >= CivS->Tech.Tier2) {
+             CivS->Tech.branch5.Ramming = true;
+             CivS->stars -= CivS->Tech.Tier2;
+         }
+         break;
+      case 28: 
+         if (CivS->Tech.branch5.Aquatism == false && CivS->Tech.branch5.Ramming == true && CivS->stars >= CivS->Tech.Tier3) {
+             CivS->Tech.branch5.Aquatism = true;
+             CivS->stars -= CivS->Tech.Tier3;
+         }
+         break;
+      case 29: 
+         if (CivS->Tech.branch5.Fishing == false && CivS->stars >= CivS->Tech.Tier1) {
+             CivS->Tech.branch5.Fishing = true;
+             CivS->stars -= CivS->Tech.Tier1;
+         }
+         break;
+      case 30: 
+         if (CivS->Tech.branch5.Sailing == false && CivS->Tech.branch5.Fishing == true && CivS->stars >= CivS->Tech.Tier2) {
+             CivS->Tech.branch5.Sailing = true;
+             CivS->stars -= CivS->Tech.Tier2;
+         }
+         break;
+      case 31: 
+         if (CivS->Tech.branch5.Navigation == false && CivS->Tech.branch5.Sailing == true && CivS->stars >= CivS->Tech.Tier3) {
+             CivS->Tech.branch5.Navigation = true;
+             CivS->stars -= CivS->Tech.Tier3;
+         }
+         break;
+   }
+}
+
+
+//------------------------------------------------
+// Movement
+//------------------------------------------------
+
+void check_on_move(const int x, const int y, int** world, struct Civs* CivS, int*** Moves) {
+   if (Moves!=NULL && *Moves!=NULL) {
+      for (int i=0; i<24; i++) {
+         if ((*Moves)[i] != NULL) {
+            free((*Moves)[i]);
+         }
+      }
+   }
+   int** newMove = realloc(*Moves, 24 * sizeof(int*));
+   *Moves = newMove;
+   struct Units* Unit = ReturnUnit(CivS, x, y);
+   for (int i=0; i<24; i++) {
+      (*Moves)[i] = NULL;
+   }
+   for (int i=0; i<=Unit->stat.movement*8; i++) {
+      (*Moves)[i] = malloc(2 * sizeof(int));
+   }
+   int pos = 0;
+   if (Unit->stat.movement != 0) {
+      for (int dx = x-Unit->stat.movement; dx<=x+Unit->stat.movement; dx++) {
+         for (int dy = y-Unit->stat.movement; dy<=y+Unit->stat.movement; dy++) {
+            switch(world[dx][dy]) {
+               case 0:
+                  break;
+               case 1:
+                  (*Moves)[pos][0] = dx;
+                  (*Moves)[pos][1] = dy;
+                  pos++;
+                  break;
+               case 2:
+                  (*Moves)[pos][0] = dx;
+                  (*Moves)[pos][1] = dy;
+                  pos++;
+                  break;
+               case 3:
+                  if (CivS->Tech.branch4.Climbing == true) {
+                     (*Moves)[pos][0] = dx;
+                     (*Moves)[pos][1] = dy;
+                     pos++;
+                  }
+                  break;
+               case 4:
+                  (*Moves)[pos][0] = dx;
+                  (*Moves)[pos][1] = dy;
+                  pos++;
+                  break;
+               case 5:
+                  break;
+            }
+         }
+      }
+   }
+}
+
+int Movement(const int x1, const int y1, const int x2, const int y2, struct Civs* CivS, int** Moves) {
+   struct Units* Unit = ReturnUnit(CivS, x1, y1);
+   if (!Unit) return 0;
+   if (Moves != NULL) {
+      for (int i=0; i<24; i++) {
+         if (Moves[i] != NULL) {
+            if (x2 == Moves[i][0] && y2 == Moves[i][1]) {
+               Unit->x = x2;
+               Unit->y = y2;
+               return 1;
+            }
+         }
+      }
+   } else {
+      return 0;
+   }
+   return 0;
 }

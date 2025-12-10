@@ -195,6 +195,8 @@ struct PTitle {
 // list of X and Y coordinate of screens features (Coordinate X and Y)
 struct CXY {
 
+    int tech_screen;
+
     //------------------------------------
     // Y
     //------------------------------------
@@ -283,6 +285,12 @@ struct CXY {
 
 
     int retreat;
+
+
+    //---------------------
+    // Movement 
+    //---------------------
+    int** Moves;
 };
 
 // list of units to hit
@@ -369,11 +377,11 @@ void map(const int size, int** world, float** resources, struct Civs* CivS, WIND
             for (int y=0; y<size; y++) {
                 for (int i=0; i<basic_territory; i++) {
                     if (CIV->territory[i][0] == x && CIV->territory[i][1] == y) {
-                        mvchgat(row-1, RETREAT+y*title_size+additinal_retreat-1, title_size+1, A_NORMAL, CIV->numb, NULL);
-                        mvchgat(row, RETREAT+y*title_size+additinal_retreat-1, title_size+1, A_NORMAL, CIV->numb, NULL);
-                        mvchgat(row+1, RETREAT+y*title_size+additinal_retreat-1, title_size+1, A_NORMAL, CIV->numb, NULL);
-                        mvchgat(row+2, RETREAT+y*title_size+additinal_retreat-1, title_size+1, A_NORMAL, CIV->numb, NULL);
-                        mvchgat(row+3, RETREAT+y*title_size+additinal_retreat-1, title_size+1, A_NORMAL, CIV->numb, NULL);
+                        mvchgat(row-1, RETREAT+y*title_size+additinal_retreat-1, title_size+1, A_NORMAL, (short)CIV->numb, NULL);
+                        mvchgat(row, RETREAT+y*title_size+additinal_retreat-1, title_size+1, A_NORMAL, (short)CIV->numb, NULL);
+                        mvchgat(row+1, RETREAT+y*title_size+additinal_retreat-1, title_size+1, A_NORMAL, (short)CIV->numb, NULL);
+                        mvchgat(row+2, RETREAT+y*title_size+additinal_retreat-1, title_size+1, A_NORMAL, (short)CIV->numb, NULL);
+                        mvchgat(row+3, RETREAT+y*title_size+additinal_retreat-1, title_size+1, A_NORMAL, (short)CIV->numb, NULL);
                     }
                 }
             }
@@ -571,7 +579,22 @@ void click_on_map(const int size, int** world, float** resources, struct Civs* C
                 //----------------------------
                 // Movement 
                 //----------------------------
-                TitlE->movement = true;
+
+                XY->Moves = NULL;
+                check_on_move(UN->x, UN->y, world, CivS, &XY->Moves);
+
+                /* Check
+                mvprintw(41, RETREAT, "Moves: ");
+                for (int i=0; i<UN->stat.movement*8; i++) {
+                    printw("[%d, %d]", Moves[i][0], Moves[i][1]);
+                }
+                refresh();
+                sleep(5);
+                */
+                if ((*XY->Moves) != NULL) {
+                    TitlE->movement = true;
+                }
+
                 
 
                 //---------
@@ -619,8 +642,8 @@ void click_on_map(const int size, int** world, float** resources, struct Civs* C
     struct Civs* CIV = CivS;
     int check_for_CV = 0;
     while(CIV!=NULL) {
-        for (int x=0; x<basic_territory; x++) {
-            if (CIV->territory[x][0] == x && CIV->territory[x][1] == y) {
+        for (int dx=0; dx<basic_territory; dx++) {
+            if (CIV->territory[dx][0] == x && CIV->territory[dx][1] == y) {
                 check_for_CV = 1;
                 if (resources[x][y] == 0.5) {
                     if (world[x][y] == 0) {
@@ -743,7 +766,9 @@ void click_on_map(const int size, int** world, float** resources, struct Civs* C
     refresh();
 }
 
-void tech_tree(const int size, struct Civs* CivS, struct CXY* XY, WINDOW* Technologies) {
+void tech_tree(struct Civs* CivS, struct CXY* XY, WINDOW* Technologies) {
+
+    wclear(Technologies);
 
     //---------------------------------
     // Colors
@@ -755,14 +780,43 @@ void tech_tree(const int size, struct Civs* CivS, struct CXY* XY, WINDOW* Techno
     init_pair(3, COLOR_WHITE, COLOR_GREEN);
     init_pair(4, COLOR_WHITE, COLOR_YELLOW);
 
-
-    //--------------------------------
-    // Create a new window
-    //--------------------------------
-
-
     
+    //----------------------------------
+    // Nulling all XY coordinates
+    //----------------------------------
 
+
+    XY->Archery = 0;
+    XY->Spiritualizm = 0;
+    XY->Hunting = 0;
+    XY->Forestry = 0;
+    XY->Mathematics = 0;
+
+    XY->Roads = 0;
+    XY->Trade = 0;
+    XY->Riding = 0;
+    XY->Free_Spirit = 0;
+    XY->Chivarly = 0;
+
+    XY->Farming = 0;
+    XY->Construction = 0;
+    XY->Organization = 0;
+    XY->Strategy = 0;
+    XY->Diplomacy = 0;
+
+    XY->Mining = 0;
+    XY->Smithery = 0;
+    XY->Climbing = 0;
+    XY->Meditation = 0;
+    XY->Philosophy = 0;
+
+    XY->Ramming = 0;
+    XY->Aquatism = 0;
+    XY->Fishing = 0;
+    XY->Sailing = 0;
+    XY->Navigation = 0;
+
+    XY->tech_screen = 1;
 
     //---------------------------------
     // Drawing a tree
@@ -902,7 +956,7 @@ void tech_tree(const int size, struct Civs* CivS, struct CXY* XY, WINDOW* Techno
     } else {
         wprintw(Technologies, " Construction ");
     }
-    XY->Construction = RETREAT+strlen("Organization ")+2+arrow_len+strlen(" Farming ")+spaced_arrow_len;
+    XY->Construction = RETREAT+(int)strlen("Organization ")+2+arrow_len+(int)strlen(" Farming ")+spaced_arrow_len;
     mvwprintw(Technologies, row_of_Tech_branch3-1, RETREAT+strlen("Organization ")+1, "/");
     wmove(Technologies, row_of_Tech_branch3, RETREAT);
     if (CivS->Tech.branch3.Organization == true) {
@@ -1103,6 +1157,7 @@ void technology(const int size, struct Civs* CivS, int tech, struct CXY* XY, WIN
     XY->Sailing = 0;
     XY->Navigation = 0;
 
+    XY->tech_screen = 2;
 
     //---------------------------------
     // Drawing technology menu
@@ -1834,7 +1889,7 @@ void technology(const int size, struct Civs* CivS, int tech, struct CXY* XY, WIN
             wprintw(Technologies, "%d ", CivS->Tech.Tier3);
             break;
     }
-   wprintw(Technologies, "🌟");
+    wprintw(Technologies, "🌟");
 
 
     //--------------------------
@@ -1847,19 +1902,105 @@ void technology(const int size, struct Civs* CivS, int tech, struct CXY* XY, WIN
     XY->retreat = row_of_menu+retreat+4;
     
 
+    //----------------------------------------------
+    // Save X of Tech into XY - use in Research
+    //----------------------------------------------
+
+
+    switch(tech) {
+
+        //-------------------------
+        // Branch 1
+        //-------------------------
+
+
+        case 7: XY->Archery = RETREAT+RETREAT; break;
+        case 8: XY->Spiritualizm = RETREAT+RETREAT; break;
+        case 9: XY->Hunting = RETREAT+RETREAT; break;
+        case 10: XY->Forestry = RETREAT+RETREAT; break;
+        case 11: XY->Mathematics = RETREAT+RETREAT; break;
+
+
+        //-------------------------
+        // Branch 2
+        //-------------------------
+
+
+        case 12: XY->Roads = RETREAT+RETREAT; break;
+        case 13: XY->Trade = RETREAT+RETREAT; break;
+        case 14: XY->Riding = RETREAT+RETREAT; break;
+        case 15: XY->Free_Spirit = RETREAT+RETREAT; break;
+        case 16: XY->Chivarly = RETREAT+RETREAT; break;
+
+
+        //-------------------------
+        // Branch 3
+        //-------------------------
+
+
+        case 17: XY->Farming = RETREAT+RETREAT; break;
+        case 18: XY->Construction = RETREAT+RETREAT; break;
+        case 19: XY->Organization = RETREAT+RETREAT; break;
+        case 20: XY->Strategy = RETREAT+RETREAT; break;
+        case 21: XY->Diplomacy = RETREAT+RETREAT; break;
+
+
+        //-------------------------
+        // Branch 4
+        //-------------------------
+
+
+        case 22: XY->Mining = RETREAT+RETREAT; break;
+        case 23: XY->Smithery = RETREAT+RETREAT; break;
+        case 24: XY->Climbing = RETREAT+RETREAT; break;
+        case 25: XY->Meditation = RETREAT+RETREAT; break;
+        case 26: XY->Philosophy = RETREAT+RETREAT; break;
+
+
+        //-------------------------
+        // Branch 5
+        //-------------------------
+
+
+        case 27: XY->Ramming = RETREAT+RETREAT; break;
+        case 28: XY->Aquatism = RETREAT+RETREAT; break;
+        case 29: XY->Fishing = RETREAT+RETREAT; break;
+        case 30: XY->Sailing = RETREAT+RETREAT; break;
+        case 31: XY->Navigation = RETREAT+RETREAT; break;
+    }
+
+
     wrefresh(Technologies);
 }
 
-int click_action(const int size, const int x, const int y, struct CXY* XY, struct Civs* CivS, WINDOW* Technologies) {
+int click_action(const int size, const int x, const int y, struct CXY* XY, struct Civs* CivS, WINDOW* Technologies, MEVENT* event, struct ClicK* Click) {
 
     //--------------------------------
     // Menu actions
     //--------------------------------
 
 
-    if (x >= 110 && x <= 130 && y >= 5 && y <= 13) {
+    if (x >= 9 && x <= 29 && y >= 5 && y <= 13) {
         if (XY->movement == y) {
-            return 1; // movement
+            mvprintw(0, RETREAT, "Click on available ceil          ");
+            refresh();
+            int DX = Click->map_x;
+            int DY = Click->map_y;
+            while(1) {
+                int h = getch();
+                if (h == KEY_MOUSE) {
+                    if (getmouse(event) == OK) {
+                        convertor(size, event->x, event->y, Click);
+                        int move = Movement(DX, DY, Click->map_x, Click->map_y, CivS, XY->Moves);
+                        if (move == 0) {
+                            mvprintw(0, 10, " False Position! ");
+                            refresh();
+                        }
+                        break;
+                    }
+                }
+            }
+            return 1;
         } else if (XY->combat == y) {
             return 2; // combat
         } else if (XY->resources == y) {
@@ -1884,8 +2025,16 @@ int click_action(const int size, const int x, const int y, struct CXY* XY, struc
     //--------------------------------
 
 
-    if (x>=8 && x<= 8+strlen(" Technologies ") && y == 2) {
-        tech_tree(size, CivS, XY, Technologies);
+    if (x>=8 && x<= 8+(int)strlen(" Technologies ") && y == 2) {
+        tech_tree(CivS, XY, Technologies);
+
+        XY->retreat = 0;
+        XY->movement = 0;
+        XY->combat = 0;
+        XY->resources = 0;
+        XY->spawn = 0;
+        XY->build = 0;
+        XY->capture_tribe = 0;
         return 0;
     }
 
@@ -1894,10 +2043,47 @@ int click_action(const int size, const int x, const int y, struct CXY* XY, struc
     //--------------------------------
 
 
-    if (x >= RETREAT && x <= RETREAT+strlen("Close Window") && y == row_of_close) {
+    if (x >= RETREAT && x <= RETREAT+(int)strlen("Close Window") && y == row_of_close) {
         wclear(Technologies);
         mvwprintw(Technologies, 2, 8, " Technology");
         wrefresh(Technologies);
+
+
+        //----------------------------------
+        // Nulling all XY coordinates
+        //----------------------------------
+
+
+        XY->Archery = 0;
+        XY->Spiritualizm = 0;
+        XY->Hunting = 0;
+        XY->Forestry = 0;
+        XY->Mathematics = 0;
+
+        XY->Roads = 0;
+        XY->Trade = 0;
+        XY->Riding = 0;
+        XY->Free_Spirit = 0;
+        XY->Chivarly = 0;
+
+        XY->Farming = 0;
+        XY->Construction = 0;
+        XY->Organization = 0;
+        XY->Strategy = 0;
+        XY->Diplomacy = 0;
+
+        XY->Mining = 0;
+        XY->Smithery = 0;
+        XY->Climbing = 0;
+        XY->Meditation = 0;
+        XY->Philosophy = 0;
+
+        XY->Ramming = 0;
+        XY->Aquatism = 0;
+        XY->Fishing = 0;
+        XY->Sailing = 0;
+        XY->Navigation = 0;
+
         return 0;
     }
 
@@ -1916,115 +2102,116 @@ int click_action(const int size, const int x, const int y, struct CXY* XY, struc
     // Branch 1
     //--------------------------------
 
-
-    if (x >= XY->Archery && x<= XY->Archery+strlen("Archery ") && y == row_of_Tech_branch1-2) {
-        technology(size, CivS, 7, XY, Technologies); // Archery
-        return 0;
-    } else if (x >= XY->Spiritualizm && x<= XY->Spiritualizm+strlen("Spiritualizm ") && y == row_of_Tech_branch1-2) {
-        technology(size, CivS, 8, XY, Technologies); // Spiritualizm
-        return 0;
-    } else if (x >= XY->Hunting && x<= XY->Hunting+strlen("Hunting ") && y == row_of_Tech_branch1) {
-        technology(size, CivS, 9, XY, Technologies); // Hunting
-        return 0;
-    } else if (x >= XY->Forestry && x<= XY->Forestry+strlen("Forestry ") && y == row_of_Tech_branch1+2) {
-        technology(size, CivS, 10, XY, Technologies); // Forestry
-        return 0;
-    } else if (x >= XY->Mathematics && x<= XY->Mathematics+strlen("Mathematics ") && y == row_of_Tech_branch1+2) {
-        technology(size, CivS, 11, XY, Technologies); // Mathematics
-        return 0;
-    } 
-
-
-    //--------------------------------
-    // Branch 2
-    //--------------------------------
-
-    
-    if (x >= XY->Roads && x<= XY->Roads+strlen("Roads ") && y == row_of_Tech_branch2-2) {
-        technology(size, CivS, 12, XY, Technologies); // Roads
-        return 0;
-    } else if (x >= XY->Trade && x<= XY->Trade+strlen("Trade ") && y == row_of_Tech_branch2-2) {
-        technology(size, CivS, 13, XY, Technologies); // Trade
-        return 0;
-    } else if (x >= XY->Riding && x<= XY->Riding+strlen("Riding ") && y == row_of_Tech_branch2) {
-        technology(size, CivS, 14, XY, Technologies); // Riding
-        return 0;
-    } else if (x >= XY->Free_Spirit && x<= XY->Free_Spirit+strlen("Free Spirit ") && y == row_of_Tech_branch2+2) {
-        technology(size, CivS, 15, XY, Technologies); // Free Spirit
-        return 0;
-    } else if (x >= XY->Chivarly && x<= XY->Chivarly+strlen("Chivarly ") && y == row_of_Tech_branch2+2) {
-        technology(size, CivS, 16, XY, Technologies); // Chivarly
-        return 0;
-    } 
+    if (XY->tech_screen == 1) {
+        if (x >= XY->Archery && x<= XY->Archery+(int)strlen("Archery ") && y == row_of_Tech_branch1-2) {
+            technology(size, CivS, 7, XY, Technologies); // Archery
+            return 0;
+        } else if (x >= XY->Spiritualizm && x<= XY->Spiritualizm+(int)strlen("Spiritualizm ") && y == row_of_Tech_branch1-2) {
+            technology(size, CivS, 8, XY, Technologies); // Spiritualizm
+            return 0;
+        } else if (x >= XY->Hunting && x<= XY->Hunting+(int)strlen("Hunting ") && y == row_of_Tech_branch1) {
+            technology(size, CivS, 9, XY, Technologies); // Hunting
+            return 0;
+        } else if (x >= XY->Forestry && x<= XY->Forestry+(int)strlen("Forestry ") && y == row_of_Tech_branch1+2) {
+            technology(size, CivS, 10, XY, Technologies); // Forestry
+            return 0;
+        } else if (x >= XY->Mathematics && x<= XY->Mathematics+(int)strlen("Mathematics ") && y == row_of_Tech_branch1+2) {
+            technology(size, CivS, 11, XY, Technologies); // Mathematics
+            return 0;
+        } 
 
 
-    //--------------------------------
-    // Branch 3
-    //--------------------------------
+        //--------------------------------
+        // Branch 2
+        //--------------------------------
 
-    
-    if (x >= XY->Farming && x<= XY->Farming+strlen("Farming ") && y == row_of_Tech_branch3-2) {
-        technology(size, CivS, 17, XY, Technologies); // Farming
-        return 0;
-    } else if (x >= XY->Construction && x<= XY->Construction+strlen("Construction ") && y == row_of_Tech_branch3-2) {
-        technology(size, CivS, 18, XY, Technologies); // Construction
-        return 0;
-    } else if (x >= XY->Organization && x<= XY->Organization+strlen("Organization ") && y == row_of_Tech_branch3) {
-        technology(size, CivS, 19, XY, Technologies); // Organization
-        return 0;
-    } else if (x >= XY->Strategy && x<= XY->Strategy+strlen("Strategy ") && y == row_of_Tech_branch3+2) {
-        technology(size, CivS, 20, XY, Technologies); // Strategy
-        return 0;
-    } else if (x >= XY->Diplomacy && x<= XY->Diplomacy+strlen("Diplomacy ") && y == row_of_Tech_branch3+2) {
-        technology(size, CivS, 21, XY, Technologies); // Diplomacy
-        return 0;
-    } 
-
-
-    //--------------------------------
-    // Branch 4
-    //--------------------------------
-
-    
-    if (x >= XY->Mining && x<= XY->Mining+strlen("Mining ") && y == row_of_Tech_branch4-2) {
-        technology(size, CivS, 22, XY, Technologies); // Mining
-        return 0;
-    } else if (x >= XY->Smithery && x<= XY->Smithery+strlen("Smithery ") && y == row_of_Tech_branch4-2) {
-        technology(size, CivS, 23, XY, Technologies); // Smithery
-        return 0;
-    } else if (x >= XY->Climbing && x<= XY->Climbing+strlen("Climbing ") && y == row_of_Tech_branch4) {
-        technology(size, CivS, 24, XY, Technologies); // Climbing
-        return 0;
-    } else if (x >= XY->Meditation && x<= XY->Meditation+strlen("Meditation ") && y == row_of_Tech_branch4+2) {
-        technology(size, CivS, 25, XY, Technologies); // Meditation
-        return 0;
-    } else if (x >= XY->Philosophy && x<= XY->Philosophy+strlen("Philosophy ") && y == row_of_Tech_branch4+2) {
-        technology(size, CivS, 26, XY, Technologies); // Philosophy
-        return 0;
-    } 
+        
+        if (x >= XY->Roads && x<= XY->Roads+(int)strlen("Roads ") && y == row_of_Tech_branch2-2) {
+            technology(size, CivS, 12, XY, Technologies); // Roads
+            return 0;
+        } else if (x >= XY->Trade && x<= XY->Trade+(int)strlen("Trade ") && y == row_of_Tech_branch2-2) {
+            technology(size, CivS, 13, XY, Technologies); // Trade
+            return 0;
+        } else if (x >= XY->Riding && x<= XY->Riding+(int)strlen("Riding ") && y == row_of_Tech_branch2) {
+            technology(size, CivS, 14, XY, Technologies); // Riding
+            return 0;
+        } else if (x >= XY->Free_Spirit && x<= XY->Free_Spirit+(int)strlen("Free Spirit ") && y == row_of_Tech_branch2+2) {
+            technology(size, CivS, 15, XY, Technologies); // Free Spirit
+            return 0;
+        } else if (x >= XY->Chivarly && x<= XY->Chivarly+(int)strlen("Chivarly ") && y == row_of_Tech_branch2+2) {
+            technology(size, CivS, 16, XY, Technologies); // Chivarly
+            return 0;
+        } 
 
 
-    //--------------------------------
-    // Branch 5
-    //--------------------------------
+        //--------------------------------
+        // Branch 3
+        //--------------------------------
 
-    
-    if (x >= XY->Ramming && x<= XY->Ramming+strlen("Ramming ") && y == row_of_Tech_branch5-2) {
-        technology(size, CivS, 27, XY, Technologies); // Ramming
-        return 0;
-    } else if (x >= XY->Aquatism && x<= XY->Aquatism+strlen("Aquatism ") && y == row_of_Tech_branch5-2) {
-        technology(size, CivS, 28, XY, Technologies); // Aquatism
-        return 0;
-    } else if (x >= XY->Fishing && x<= XY->Fishing+strlen("Fishing ") && y == row_of_Tech_branch5) {
-        technology(size, CivS, 29, XY, Technologies); // Fishing
-        return 0;
-    } else if (x >= XY->Sailing && x<= XY->Sailing+strlen("Sailing ") && y == row_of_Tech_branch5+2) {
-        technology(size, CivS, 30, XY, Technologies); // Sailing
-        return 0;
-    } else if (x >= XY->Navigation && x<= XY->Navigation+strlen("Navigation ") && y == row_of_Tech_branch5+2) {
-        technology(size, CivS, 31, XY, Technologies); // Navigation
-        return 0;
-    } 
+        
+        if (x >= XY->Farming && x<= XY->Farming+(int)strlen("Farming ") && y == row_of_Tech_branch3-2) {
+            technology(size, CivS, 17, XY, Technologies); // Farming
+            return 0;
+        } else if (x >= XY->Construction && x<= XY->Construction+(int)strlen("Construction ") && y == row_of_Tech_branch3-2) {
+            technology(size, CivS, 18, XY, Technologies); // Construction
+            return 0;
+        } else if (x >= XY->Organization && x<= XY->Organization+(int)strlen("Organization ") && y == row_of_Tech_branch3) {
+            technology(size, CivS, 19, XY, Technologies); // Organization
+            return 0;
+        } else if (x >= XY->Strategy && x<= XY->Strategy+(int)strlen("Strategy ") && y == row_of_Tech_branch3+2) {
+            technology(size, CivS, 20, XY, Technologies); // Strategy
+            return 0;
+        } else if (x >= XY->Diplomacy && x<= XY->Diplomacy+(int)strlen("Diplomacy ") && y == row_of_Tech_branch3+2) {
+            technology(size, CivS, 21, XY, Technologies); // Diplomacy
+            return 0;
+        } 
+
+
+        //--------------------------------
+        // Branch 4
+        //--------------------------------
+
+        
+        if (x >= XY->Mining && x<= XY->Mining+(int)strlen("Mining ") && y == row_of_Tech_branch4-2) {
+            technology(size, CivS, 22, XY, Technologies); // Mining
+            return 0;
+        } else if (x >= XY->Smithery && x<= XY->Smithery+(int)strlen("Smithery ") && y == row_of_Tech_branch4-2) {
+            technology(size, CivS, 23, XY, Technologies); // Smithery
+            return 0;
+        } else if (x >= XY->Climbing && x<= XY->Climbing+(int)strlen("Climbing ") && y == row_of_Tech_branch4) {
+            technology(size, CivS, 24, XY, Technologies); // Climbing
+            return 0;
+        } else if (x >= XY->Meditation && x<= XY->Meditation+(int)strlen("Meditation ") && y == row_of_Tech_branch4+2) {
+            technology(size, CivS, 25, XY, Technologies); // Meditation
+            return 0;
+        } else if (x >= XY->Philosophy && x<= XY->Philosophy+(int)strlen("Philosophy ") && y == row_of_Tech_branch4+2) {
+            technology(size, CivS, 26, XY, Technologies); // Philosophy
+            return 0;
+        } 
+
+
+        //--------------------------------
+        // Branch 5
+        //--------------------------------
+
+        
+        if (x >= XY->Ramming && x<= XY->Ramming+(int)strlen("Ramming ") && y == row_of_Tech_branch5-2) {
+            technology(size, CivS, 27, XY, Technologies); // Ramming
+            return 0;
+        } else if (x >= XY->Aquatism && x<= XY->Aquatism+(int)strlen("Aquatism ") && y == row_of_Tech_branch5-2) {
+            technology(size, CivS, 28, XY, Technologies); // Aquatism
+            return 0;
+        } else if (x >= XY->Fishing && x<= XY->Fishing+(int)strlen("Fishing ") && y == row_of_Tech_branch5) {
+            technology(size, CivS, 29, XY, Technologies); // Fishing
+            return 0;
+        } else if (x >= XY->Sailing && x<= XY->Sailing+(int)strlen("Sailing ") && y == row_of_Tech_branch5+2) {
+            technology(size, CivS, 30, XY, Technologies); // Sailing
+            return 0;
+        } else if (x >= XY->Navigation && x<= XY->Navigation+(int)strlen("Navigation ") && y == row_of_Tech_branch5+2) {
+            technology(size, CivS, 31, XY, Technologies); // Navigation
+            return 0;
+        } 
+    }
 
 
     //------------------------------------
@@ -2032,9 +2219,9 @@ int click_action(const int size, const int x, const int y, struct CXY* XY, struc
     //------------------------------------
 
 
-    if (x >= RETREAT && x <= RETREAT+strlen(" Close ") && y == XY->retreat) {
+    if (x >= RETREAT && x <= RETREAT+(int)strlen(" Close ") && y == XY->retreat) {
         wclear(Technologies);
-        tech_tree(size, CivS, XY, Technologies);
+        tech_tree(CivS, XY, Technologies);
         return 0;
     }
 
@@ -2042,9 +2229,197 @@ int click_action(const int size, const int x, const int y, struct CXY* XY, struc
     // Reseach
     //------------------------------------
 
+    if (XY->tech_screen == 2) {
+        if (x >= RETREAT+RETREAT && x <= RETREAT+RETREAT+(int)strlen(" Research ") && y == XY->retreat) {
 
-    if (x >= RETREAT+RETREAT && x <= RETREAT+RETREAT+strlen(" Research ") && y == XY->retreat) {
-        return 0;
+            //-------------------------------------------
+            // Branch 1
+            //-------------------------------------------
+
+            if (x >= XY->Archery && x <= XY->Archery+(int)strlen(" Research ")) {
+                if (CivS->Tech.branch1.Archery == false) {
+                    Research(CivS, 7);
+                    technology(size, CivS, 7, XY, Technologies);
+                    return 0;
+                }
+            } else if (x >= XY->Spiritualizm && x <= XY->Spiritualizm+(int)strlen(" Research ")) {
+                if (CivS->Tech.branch1.Spiritualizm == false) {
+                    Research(CivS, 8);
+                    technology(size, CivS, 8, XY, Technologies);    
+                    return 0;
+                }
+            } else if (x >= XY->Hunting && x <= XY->Hunting+(int)strlen(" Research ")) {
+                if (CivS->Tech.branch1.Hunting == false) {
+                    Research(CivS, 9);
+                    technology(size, CivS, 9, XY, Technologies);    
+                    return 0;
+                }
+            } else if (x >= XY->Forestry && x <= XY->Forestry+(int)strlen(" Research ")) {
+                if (CivS->Tech.branch1.Forestry == false) {
+                    Research(CivS, 10);
+                    technology(size, CivS, 10, XY, Technologies);    
+                    return 0;
+                }
+            } else if (x >= XY->Mathematics && x <= XY->Mathematics+(int)strlen(" Research ")) {
+                if (CivS->Tech.branch1.Mathematics == false) {
+                    Research(CivS, 11);
+                    technology(size, CivS, 11, XY, Technologies);    
+                    return 0;
+                }
+            }
+
+
+            //-------------------------------------------
+            // Branch 2
+            //-------------------------------------------
+
+
+            if (x >= XY->Roads && x <= XY->Roads+(int)strlen(" Research ")) {
+                if (CivS->Tech.branch2.Roads == false) {
+                    Research(CivS, 12);
+                    technology(size, CivS, 12, XY, Technologies);
+                    return 0;
+                }
+            } else if (x >= XY->Trade && x <= XY->Trade+(int)strlen(" Research ")) {
+                if (CivS->Tech.branch2.Trade == false) {
+                    Research(CivS, 13);
+                    technology(size, CivS, 13, XY, Technologies);    
+                    return 0;
+                }
+            } else if (x >= XY->Riding && x <= XY->Riding+(int)strlen(" Research ")) {
+                if (CivS->Tech.branch2.Riding == false) {
+                    Research(CivS, 14);
+                    technology(size, CivS, 14, XY, Technologies);    
+                    return 0;
+                }
+            } else if (x >= XY->Free_Spirit && x <= XY->Free_Spirit+(int)strlen(" Research ")) {
+                if (CivS->Tech.branch2.Free_Spirit == false) {
+                    Research(CivS, 15);
+                    technology(size, CivS, 15, XY, Technologies);    
+                    return 0;
+                }
+            } else if (x >= XY->Chivarly && x <= XY->Chivarly+(int)strlen(" Research ")) {
+                if (CivS->Tech.branch2.Chivalry == false) {
+                    Research(CivS, 16);
+                    technology(size, CivS, 16, XY, Technologies);    
+                    return 0;
+                }
+            }
+
+
+            //-------------------------------------------
+            // Branch 3
+            //-------------------------------------------
+
+
+            else if (x >= XY->Farming && x <= XY->Farming+(int)strlen(" Research ")) {
+                if (CivS->Tech.branch3.Farming == false) {
+                    Research(CivS, 17);
+                    technology(size, CivS, 17, XY, Technologies);
+                    return 0;
+                }
+            } else if (x >= XY->Construction && x <= XY->Construction+(int)strlen(" Research ")) {
+                if (CivS->Tech.branch3.Construction == false) {
+                    Research(CivS, 18);
+                    technology(size, CivS, 18, XY, Technologies);    
+                    return 0;
+                }
+            } else if (x >= XY->Organization && x <= XY->Organization+(int)strlen(" Research ")) {
+                if (CivS->Tech.branch3.Organization == false) {
+                    Research(CivS, 19);
+                    technology(size, CivS, 19, XY, Technologies);    
+                    return 0;
+                }
+            } else if (x >= XY->Strategy && x <= XY->Strategy+(int)strlen(" Research ")) {
+                if (CivS->Tech.branch3.Strategy == false) {
+                    Research(CivS, 20);
+                    technology(size, CivS, 20, XY, Technologies);    
+                    return 0;
+                }
+            } else if (x >= XY->Diplomacy && x <= XY->Diplomacy+(int)strlen(" Research ")) {
+                if (CivS->Tech.branch3.Diplomacy == false) {
+                    Research(CivS, 21);
+                    technology(size, CivS, 21, XY, Technologies);    
+                    return 0;
+                }
+            }
+
+
+            //-------------------------------------------
+            // Branch 4
+            //-------------------------------------------
+
+
+            if (x >= XY->Mining && x <= XY->Mining+(int)strlen(" Research ")) {
+                if (CivS->Tech.branch4.Mining == false) {
+                    Research(CivS, 22);
+                    technology(size, CivS, 22, XY, Technologies);
+                    return 0;
+                }
+            } else if (x >= XY->Smithery && x <= XY->Smithery+(int)strlen(" Research ")) {
+                if (CivS->Tech.branch4.Smithery == false) {
+                    Research(CivS, 23);
+                    technology(size, CivS, 23, XY, Technologies);    
+                    return 0;
+                }
+            } else if (x >= XY->Climbing && x <= XY->Climbing+(int)strlen(" Research ")) {
+                if (CivS->Tech.branch4.Climbing == false) {
+                    Research(CivS, 24);
+                    technology(size, CivS, 24, XY, Technologies);    
+                    return 0;
+                }
+            } else if (x >= XY->Meditation && x <= XY->Meditation+(int)strlen(" Research ")) {
+                if (CivS->Tech.branch4.Meditation == false) {
+                    Research(CivS, 25);
+                    technology(size, CivS, 25, XY, Technologies);    
+                    return 0;
+                }
+            } else if (x >= XY->Philosophy && x <= XY->Philosophy+(int)strlen(" Research ")) {
+                if (CivS->Tech.branch4.Philosophy == false) {
+                    Research(CivS, 26);
+                    technology(size, CivS, 26, XY, Technologies);    
+                    return 0;
+                }
+            }
+
+
+            //-------------------------------------------
+            // Branch 5
+            //-------------------------------------------
+
+
+            if (x >= XY->Ramming && x <= XY->Ramming+(int)strlen(" Research ")) {
+                if (CivS->Tech.branch5.Ramming == false) {
+                    Research(CivS, 27);
+                    technology(size, CivS, 27, XY, Technologies);
+                    return 0;
+                }
+            } else if (x >= XY->Aquatism && x <= XY->Aquatism+(int)strlen(" Research ")) {
+                if (CivS->Tech.branch5.Aquatism == false) {
+                    Research(CivS, 28);
+                    technology(size, CivS, 28, XY, Technologies);    
+                    return 0;
+                }
+            } else if (x >= XY->Fishing && x <= XY->Fishing+(int)strlen(" Research ")) {
+                if (CivS->Tech.branch5.Fishing == false) {
+                    Research(CivS, 29);
+                    technology(size, CivS, 29, XY, Technologies);    
+                    return 0;
+                }
+            } else if (x >= XY->Sailing && x <= XY->Sailing+(int)strlen(" Research ")) {
+                if (CivS->Tech.branch5.Sailing == false) {
+                    Research(CivS, 30);
+                    technology(size, CivS, 30, XY, Technologies);    
+                    return 0;
+                }
+            } else if (x >= XY->Navigation && x <= XY->Navigation+(int)strlen(" Research ")) {
+                if (CivS->Tech.branch5.Navigation == false) {
+                    Research(CivS, 31);
+                    technology(size, CivS, 31, XY, Technologies);    
+                    return 0; 
+                }
+            }
+        }
     }
 
 

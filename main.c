@@ -191,6 +191,9 @@ struct PTitle {
 
 // list of X and Y coordinate of screens features (Coordinate X and Y)
 struct CXY {
+
+    int tech_screen;
+
     // Y
     int movement;
     int combat;
@@ -241,6 +244,14 @@ struct CXY {
 
 
     int retreat;
+
+
+    //---------------------
+    // Movement 
+    //---------------------
+
+
+    int** Moves;
 };
 
 // list of units to hit
@@ -346,7 +357,7 @@ int main() {
                     Click->action_x = event.x -101;
                     Click->action_y = event.y -0;
                     mvprintw(44, 10, "OUT OF MAP: x=%d y=%d                         ", Click->action_x, Click->action_y);
-                    int chose = click_action(size, Click->action_x, Click->action_y, XY, CivS, Technologies);
+                    int chose = click_action(size, Click->action_x, Click->action_y, XY, CivS, Technologies, &event, Click);
                     switch (chose) {
                         
                         //-----------------------------------------
@@ -354,202 +365,34 @@ int main() {
                         //-----------------------------------------
 
 
-                        case 1: mvprintw(20, 110, "Movement was chosen!                                "); break;
+                        case 1: 
+                            //int DX = Click->map_x;
+                            //int DY = Click->map_y;
+                            map(size, world, resources, CivS, Technologies);
+                            /*
+                            while(1) {
+                                int h = getch();
+                                if (h == KEY_MOUSE) {
+                                    if (getmouse(&event) == OK) {
+                                        convertor(size, event.x, event.y, Click);
+                                        int move = Movement(DX, DY, Click->map_x, Click->map_y, CivS, XY->Moves);
+                                        if (move == 0) {
+                                            mvprintw(0, 10, " False Position! ");
+                                        }
+                                        map(size, world, resources, CivS, Technologies);
+                                        break;
+                                    }
+                                }
+                            }
+                            */
+                            break;
+
                         case 2: mvprintw(20, 110, "Combat was chosen!                                "); break;
                         case 3: mvprintw(20, 110, "Grab Resources was chosen!                                "); break;
                         case 4: mvprintw(20, 110, "Spawn unit was chosen!                                "); break;
                         case 5: mvprintw(20, 110, "Buiding was chosen!                                "); break;
                         case 6: mvprintw(20, 110, "Capture tribe was chosen!                                "); break;
 
-
-                        //-----------------------------------------
-                        // Tech Tree Actions
-                        //-----------------------------------------
-
-
-                        //-----------------------------------------
-                        // Branch 1
-                        //-----------------------------------------
-                        /*
-                        case 7: 
-                            clear();
-                            map(size, world, resources, CivS);
-                            mvprintw(41, 110, "Archery was chosen!                                ");
-                            refresh();
-                            break;
-                        case 8: 
-                            clear();
-                            map(size, world, resources, CivS);
-                            mvprintw(41, 110, "Spiritualizm was chosen!                                ");
-                            refresh();
-                            break;
-                        case 9: 
-                            clear();
-                            map(size, world, resources, CivS);
-                            mvprintw(41, 110, "Hunting was chosen!                                ");
-                            refresh();
-                            break;
-                        case 10: 
-                            clear();
-                            map(size, world, resources, CivS);
-                            mvprintw(41, 110, "Forestry was chosen!                                ");
-                            refresh();
-                            break;
-                        case 11: 
-                            clear();
-                            map(size, world, resources, CivS);
-                            mvprintw(41, 110, "Mathematics was chosen!                                ");
-                            refresh();
-                            break;
-
-                        
-                        //-----------------------------------------
-                        // Branch 2
-                        //-----------------------------------------
-
-
-                        case 12: 
-                            clear();
-                            map(size, world, resources, CivS);
-                            mvprintw(41, 110, "Roads was chosen!                                ");
-                            refresh();
-                            break;
-                        case 13: 
-                            clear();
-                            map(size, world, resources, CivS);
-                            mvprintw(41, 110, "Trade was chosen!                                ");
-                            refresh();
-                            break;
-                        case 14: 
-                            clear();
-                            map(size, world, resources, CivS);
-                            mvprintw(41, 110, "Raiding was chosen!                                ");
-                            refresh();
-                            break;
-                        case 15: 
-                            clear();
-                            map(size, world, resources, CivS);
-                            mvprintw(41, 110, "Free Spirit was chosen!                                ");
-                            refresh();
-                            break;
-                        case 16: 
-                            clear();
-                            //map(size, world, resources, CivS);
-                            mvprintw(41, 110, "Chivarly was chosen!                                ");
-                            refresh();
-                            break;
-
-
-                        //-----------------------------------------
-                        // Branch 3
-                        //-----------------------------------------
-
-
-                        case 17: 
-                            clear();
-                            map(size, world, resources, CivS);
-                            mvprintw(41, 110, "Farming was chosen!                                ");
-                            refresh();
-                            break;
-                        case 18: 
-                            clear();
-                            map(size, world, resources, CivS);
-                            mvprintw(41, 110, "Construction was chosen!                                ");
-                            refresh();
-                            break;
-                        case 19: 
-                            clear();
-                            map(size, world, resources, CivS);
-                            mvprintw(41, 110, "Organization was chosen!                                ");
-                            refresh();
-                            break;
-                        case 20: 
-                            clear();
-                            map(size, world, resources, CivS);
-                            mvprintw(41, 110, "Strategy was chosen!                                ");
-                            refresh();
-                            break;
-                        case 21: 
-                            clear();
-                            map(size, world, resources, CivS);
-                            mvprintw(41, 110, "Diplomacy was chosen!                                ");
-                            refresh();
-                            break;
-
-
-                        //-----------------------------------------
-                        // Branch 4
-                        //-----------------------------------------
-
-
-                        case 22: 
-                            clear();
-                            map(size, world, resources, CivS);
-                            mvprintw(41, 110, "Mining was chosen!                                ");
-                            refresh();
-                            break;
-                        case 23: 
-                            clear();
-                            map(size, world, resources, CivS);
-                            mvprintw(41, 110, "Smithery was chosen!                                ");
-                            refresh();
-                            break;
-                        case 24: 
-                            clear();
-                            map(size, world, resources, CivS);
-                            mvprintw(41, 110, "Climbing was chosen!                                ");
-                            refresh();
-                            break;
-                        case 25: 
-                            clear();
-                            map(size, world, resources, CivS);
-                            mvprintw(41, 110, "Meditation was chosen!                                ");
-                            refresh();
-                            break;
-                        case 26: 
-                            clear();
-                            map(size, world, resources, CivS);
-                            mvprintw(41, 110, "Philosophy was chosen!                                ");
-                            refresh();
-                            break;
-
-
-                        //-----------------------------------------
-                        // Branch 5
-                        //-----------------------------------------
-
-
-                        case 27: 
-                            clear();
-                            map(size, world, resources, CivS);
-                            mvprintw(41, 110, "Ramming was chosen!                                ");
-                            refresh();
-                            break;
-                        case 28: 
-                            clear();
-                            map(size, world, resources, CivS);
-                            mvprintw(41, 110, "Aquatism was chosen!                                ");
-                            refresh();
-                            break;
-                        case 29: 
-                            clear();
-                            map(size, world, resources, CivS);
-                            mvprintw(41, 110, "Fishing was chosen!                                ");
-                            refresh();
-                            break;
-                        case 30: 
-                            clear();
-                            map(size, world, resources, CivS);
-                            mvprintw(41, 110, "Sailing was chosen!                                ");
-                            refresh();
-                            break;
-                        case 31: 
-                            clear();
-                            map(size, world, resources, CivS);
-                            mvprintw(41, 110, "Navigation was chosen!                                ");
-                            refresh();
-                            break;
-                            */
                     }
 
                 }
