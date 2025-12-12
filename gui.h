@@ -4,15 +4,17 @@
 struct Civs;
 struct ClicK;
 struct CXY;
+struct GAME;
+struct TribeS;
 
 // map drawing
-void map(const int size, int** world, float** resources, struct Civs* CivS, WINDOW* Technologies);
+void map(const int size, int** world, int** resources, struct Civs* CivS, WINDOW* Technologies);
 
 // convert coordinates of screen into coordinates of arrays
 void convertor(const int size, const int screen_x, const int screen_y, struct ClicK* Click);
 
 // draw the list of action allowed to player in this title
-void click_on_map(const int size, int** world, float** resources, struct Civs* CivS, const int x, const int y, struct CXY* XY);
+void click_on_map(const int size, int** world, int** resources, struct Civs* CivS, const int x, const int y, struct CXY* XY, WINDOW* Technologies, struct GAME* Game);
 
 // Show Technology tree !!!of player CIV - get a player CIV as parametr
 void tech_tree(const int size, struct Civs* CivS, struct CXY* XY, WINDOW* Technologies);
@@ -21,6 +23,7 @@ void tech_tree(const int size, struct Civs* CivS, struct CXY* XY, WINDOW* Techno
 void technology(const int size, struct Civs* CivS, int tech, struct CXY* XY, WINDOW* Technologies);
 
 // takes coordinates and return which function(mechanic) need to lauch
-int click_action(const int size, const int x, const int y, struct CXY* XY, struct Civs* CivS, WINDOW* Technologies, MEVENT* event, struct ClicK* Click);
-
+int click_action(const int size, const int x, const int y, struct CXY* XY, struct Civs* CivS, WINDOW* Technologies, MEVENT* event, struct ClicK* Click, int** resources, int** world, struct GAME* Game);
 #endif // GUI_H
+
+

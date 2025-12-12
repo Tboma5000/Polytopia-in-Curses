@@ -1,5 +1,6 @@
 CC=gcc
-CFLAGS=-std=c11 -Wall -Wno-vla-parameter
+CFLAGS=-std=c11 -Wno-vla-parameter -Wall -Wextra -Wconversion -Wsign-conversion
+
 LDLIBS=-lm -lncursesw
 OUTPUT=game
 

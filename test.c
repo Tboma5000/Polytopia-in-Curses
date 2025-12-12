@@ -218,7 +218,6 @@ struct Civs {
    int income;
    int** territory;
    struct City* Cities; // list of cities under control of this civ
-   int countCity;
    struct Units* Unites; // list of units under control of this civ
    struct Technology Tech; // technologys this civ
    struct Civs *next; // connection with next civ
@@ -439,7 +438,7 @@ int main() {
     print_world(size, world);
     printf("\n");
 
-    resources_generation(size, resources, world);
+    //resources_generation(size, resources, world);
     //print_res(size, resources);
     //printf("\n");
 
@@ -451,75 +450,11 @@ int main() {
     print_tribes(Game->Tribes);
     printf("\n");
 
-    sleep(5);
+    //sleep(5);
 
-    initscr();
-    start_color(); 
-    clear();
-    cbreak();
-    noecho();
-    keypad(stdscr, 1);
-    curs_set(0);
+    check_tribe(CivS, Game);
 
-    mousemask(ALL_MOUSE_EVENTS, NULL);
-
-    MEVENT event;
-
-    WINDOW* Technologies = newwin(height, width, 0, size*size+1);
-    map(size, world, resources, CivS, Technologies);
-
-    while (1) {
-        int ch = getch();
-
-        if (ch == KEY_MOUSE) {
-            if (getmouse(&event) == OK) {
-                mvprintw(43, 10, "CLICK: x=%d y=%d                      ", event.x, event.y);
-                if (event.x >= 10 && event.x <= 100 && event.y >= 1 && event.y <= 41) {
-                    convertor(size, event.x, event.y, Click);
-                    mvprintw(44, 10, "CONVERT: x=%d y=%d                         ", Click->map_x, Click->map_y);
-                    refresh();
-                    click_on_map(size, world, resources, CivS, Click->map_x, Click->map_y, XY, Technologies, Game);
-                    map(size, world, resources, CivS, Technologies);
-                } else {
-                    Click->action_x = event.x -101;
-                    Click->action_y = event.y -0;
-                    mvprintw(44, 10, "OUT OF MAP: x=%d y=%d                         ", Click->action_x, Click->action_y);
-                    int chose = click_action(size, Click->action_x, Click->action_y, XY, CivS, Technologies, &event, Click, resources, world, Game);
-                    switch (chose) {
-                        
-                        //-----------------------------------------
-                        // Menu actions
-                        //-----------------------------------------
-
-
-                        case 1: 
-                            map(size, world, resources, CivS, Technologies);
-                            break;
-
-                        case 2: mvprintw(20, 110, "Combat was chosen!                                "); break;
-                        case 3: 
-                            map(size, world, resources, CivS, Technologies);
-                            break;
-                        case 4: 
-                            mvprintw(20, 110, "Spawn unit was chosen!                                "); 
-                            map(size, world, resources, CivS, Technologies);
-                            break;
-                        case 5: 
-                            map(size, world, resources, CivS, Technologies);
-                            break;
-                        case 6: 
-                            map(size, world, resources, CivS, Technologies);
-                            break;
-
-                    }
-
-                }
-            }
-        }
-    }
-
-    getchar();
-    endwin();
+    
 
     return 0;
 }
