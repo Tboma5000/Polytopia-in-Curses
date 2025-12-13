@@ -218,6 +218,7 @@ struct Civs {
    int income;
    int** territory;
    struct City* Cities; // list of cities under control of this civ
+   int countCity;
    struct Units* Unites; // list of units under control of this civ
    struct Technology Tech; // technologys this civ
    struct Civs *next; // connection with next civ
@@ -438,24 +439,62 @@ int main() {
     print_world(size, world);
     printf("\n");
 
-    //resources_generation(size, resources, world);
+    resources_generation(size, resources, world);
     //print_res(size, resources);
     //printf("\n");
 
     civs_creation(size, world, &CivS, CIV);
-    //print_civs(CivS);
-    //printf("\n");
+    print_civs(CivS);
+    printf("\n");
 
     tribes_write(size, world, &Game->Tribes);
-    print_tribes(Game->Tribes);
-    printf("\n");
+    //print_tribes(Game->Tribes);
+    //printf("\n");
 
     //sleep(5);
 
-    check_tribe(CivS, Game);
+    int** Moves = NULL;
+    int** Combats = NULL;
 
+    int chose = 0;
+    int x1, y1 = 0;
+    int x2, y2 = 0;
+    int c = 0;
+    while (1) {
+        if (chose != 3) {
+            printf("Enter X1 Y1: ");
+            scanf(" %d %d", &x1, &y1);
+
+            printf("Enter X2 Y2: ");
+            scanf(" %d %d", &x2, &y2);
+
+            c = check_on_move(size, x1, y1, world, CivS, &Moves, 24);
+            Movement(x1, y1, x2, y2, CivS, Moves, 24);
+
+            print_civs(CivS);
+            printf("\n");
+
+            
+            printf("\n 1 - exit, 2 - Move, 3 - Combat\n");
+            scanf(" %d", &chose);
+            if (chose == 1) {
+                break;
+            } else if (chose == 2) {
+                continue;
+            }
+        }
+        x1 = x2;
+        y1 = y2;
+        printf("Enter X2 Y2: ");
+        scanf(" %d %d", &x2, &y2);
+
+        c = check_on_combat(size, x1, y1, CivS, &Combats, 8);
+        Combat(x1, y1, x2, y2, CivS, Combats, 8, world);
+
+        print_civs(CivS);
+        printf("\n");
+    }
     
-
     return 0;
 }
 

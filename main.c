@@ -142,6 +142,8 @@ struct Units {
 // list of all cities
 struct City {
    int numb; // number of civ
+   int siege_turn;
+   bool Capture_City;
    int x;
    int y;
    int population;
@@ -219,6 +221,7 @@ struct Civs {
    int** territory;
    struct City* Cities; // list of cities under control of this civ
    int countCity;
+   int countCity_prev;
    struct Units* Unites; // list of units under control of this civ
    struct Technology Tech; // technologys this civ
    struct Civs *next; // connection with next civ
@@ -244,6 +247,7 @@ struct PTitle {
     bool spawn;
     bool build;
     bool capture_tribe;
+    bool capture_city;
 };
 
 // list of X and Y coordinate of screens features (Coordinate X and Y)
@@ -262,6 +266,7 @@ struct CXY {
     int spawn;
     int build;
     int capture_tribe;
+    int capture_city;
 
     //Technology
     int Technology;
@@ -354,6 +359,18 @@ struct CXY {
 
     int sizeof_Combat;
     int** Combats;
+
+    //---------------------
+    // Spawn
+    //---------------------
+
+    int spawn_Warrior;
+    int spawn_Archer;
+    int spawn_Catapult;
+    int spawn_Rider;
+    int spawn_Defender;
+    int spawn_Knight;
+    int spawn_Swordsman;
 };
 
 // list of units to hit
@@ -451,7 +468,7 @@ int main() {
     print_tribes(Game->Tribes);
     printf("\n");
 
-    sleep(5);
+    //sleep(5);
 
     initscr();
     start_color(); 
@@ -495,8 +512,9 @@ int main() {
                         case 1: 
                             map(size, world, resources, CivS, Technologies);
                             break;
-
-                        case 2: mvprintw(20, 110, "Combat was chosen!                                "); break;
+                        case 2: 
+                            map(size, world, resources, CivS, Technologies);
+                            break;
                         case 3: 
                             map(size, world, resources, CivS, Technologies);
                             break;

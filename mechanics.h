@@ -23,9 +23,11 @@ void resources_generation(const int size, int** resources, int** world);
 // Structures
 //-------------------------------------------------------------------------------------
 
+// fully free and clean array
+void clear_arr(int*** ARR, int size);
 
 // Return number of CIV, which this territory depend
-int ReturnNumbOfCiv(struct Civs* CivS, const int x, const int y, const int sizeof_territory);
+int ReturnNumbOfCiv(struct Civs* CivS, const int x, const int y);
 
 // Return City, which this territory depend
 struct City* ReturnCity(struct Civs* CivS, const int x, const int y);
@@ -36,18 +38,26 @@ struct Civs* ReturnCiv(struct Civs* CivS, int number);
 // Return a Unit of Civ, that is on this position
 struct Units* ReturnUnit(struct Civs* CivS, const int x, const int y);
 
+// Add territory to City, compare with territory other CivS and expand territory of CIV
+void Expansion(struct Civs* CivS, struct Civs* CIV, struct City* CITY, const int size, const int x, const int y);
+
 // Create a Civ for the start of game
 void new_Civ(struct Civs** head, int number, int x, int y);
 
 // Create a new City - zero City
-void new_City(struct Civs* CIV, struct City** head, int number, int x, int y);
+void new_City(struct Civs* CivS, struct Civs* CIV, struct City** head, int number, int x, int y);
 
 // Create a new Unit in certain coordinates and with certain type
 void new_Unit(struct Units** head, int number, int x, int y, int type);
 
+// Delete Unit
+void delete_Unit(struct Civs* CivS, const int x, const int y);
+
 // Write a list with number of civ and coordinates of capital
 void civs_creation(const int size, int** world, struct Civs** CivS, int CIV);
 
+// clear territory of CIV and add all Cities territory to territory CIV
+void Territory(struct Civs* CivS);
 
 //-----------------------
 // Tribes
@@ -58,10 +68,13 @@ void civs_creation(const int size, int** world, struct Civs** CivS, int CIV);
 void tribes_write(const int size, int** world, struct TribeS** head);
 
 // Check: does any unit on tribe
-void check_tribe(struct Civs* CivS, struct GAME* Game);
+void check_tribe(struct Civs* CivS, struct GAME* Game, const int x, const int y);
 
 // Delete tribe from map and add this as zero City to Civ, which unit is here
 void Capture_tribe(const int size, const int x, const int y, int** world, struct Civs* CivS, struct GAME* Game);
+
+// Remove from list tribe what was captured
+void remove_tribe(struct GAME* Game, const int x, const int y);
 
 //-------------------------------------------------------------------------------------
 // Research
@@ -77,22 +90,26 @@ void Research(struct Civs* CivS, int tech);
 //---------------------------------------------
 
 
-//
-void clear_arr(int*** Moves, int size);
-
 // Fill array of posible moves to unit
-void check_on_move(const int size, const int x, const int y, int** world, struct Civs* CivS, int*** Moves, int sizeof_Moves);
+int check_on_move(const int size, const int x, const int y, int** world, struct Civs* CivS, int*** Moves, int sizeof_Moves);
 
 // Move unit to right position - return 1, else return 0
 int Movement(const int x1, const int y1, const int x2, const int y2, struct Civs* CivS, int** Moves, int sizeof_Moves);
 
-// in process
-// Fill array Combats of posible fights
-void check_on_combat(const int size, const int x, const int y, struct Civs* CivS, int*** Combats, int sizeof_Combats);
 
-// in process
+//--------------------------
+// Combat
+//--------------------------
+
+
+// Fill array Combats of posible fights
+int check_on_combat(const int size, const int x, const int y, struct Civs* CivS, int*** Combats, int sizeof_Combats);
+
+// Count defence of unit
+int defence(struct Units* Unit, struct Civs* CivS, int** world);
+
 // If all good - make combat between units, return 1, else return 0
-int Combat(const int size, const int x1, const int y1, const int x2, const int y2, struct Civs* CivS, int** Combats, int sizeof_Combats);
+int Combat(const int x1, const int y1, const int x2, const int y2, struct Civs* CivS, int** Combat, int sizeof_Combats, int** world);
 
 
 //-------------------------------
@@ -109,5 +126,15 @@ int TakeResource(const int x, const int y, int** resources, struct Civs* CivS);
 
 int Building(const int x, const int y, int** world, int** resources, struct Civs* CivS);
 
+
+//---------------------------
+// Capture City
+//---------------------------
+
+// Check: does any city under siege
+void check_capturing_city(struct Civs* CivS, struct GAME* Game);
+
+// Remove city from CIV1 and Add to CIV2
+void Capture_City(struct Civs* CivS, const int x, const int y, const int NumCIV2);
 
 #endif // MECHANICS_H

@@ -131,6 +131,8 @@ struct Units {
 // list of all cities
 struct City {
    int numb; // number of civ
+   int siege_turn;
+   bool Capture_City;
    int x;
    int y;
    int population;
@@ -208,6 +210,7 @@ struct Civs {
    int** territory;
    struct City* Cities; // list of cities under control of this civ
    int countCity;
+   int countCity_prev;
    struct Units* Unites; // list of units under control of this civ
    struct Technology Tech; // technologys this civ
    struct Civs *next; // connection with next civ
@@ -233,6 +236,7 @@ struct PTitle {
     bool spawn;
     bool build;
     bool capture_tribe;
+    bool capture_city;
 };
 
 // list of X and Y coordinate of screens features (Coordinate X and Y)
@@ -251,6 +255,7 @@ struct CXY {
     int spawn;
     int build;
     int capture_tribe;
+    int capture_city;
 
     //Technology
     int Technology;
@@ -333,6 +338,8 @@ struct CXY {
     //---------------------
     // Movement 
     //---------------------
+
+
     int sizeof_Moves;
     int** Moves;
 
@@ -343,6 +350,19 @@ struct CXY {
 
     int sizeof_Combat;
     int** Combats;
+
+
+    //---------------------
+    // Spawn
+    //---------------------
+
+    int spawn_Warrior;
+    int spawn_Archer;
+    int spawn_Catapult;
+    int spawn_Rider;
+    int spawn_Defender;
+    int spawn_Knight;
+    int spawn_Swordsman;
 };
 
 // list of units to hit
@@ -544,35 +564,83 @@ void map(const int size, int** world, int** resources, struct Civs* CivS, WINDOW
     //-----------------------------------------------
 
 
-    struct Civs* CV = CivS;
     for (int x=0; x<size; x++) {
         int row = x*4+2;
-        char* symb = calloc(6, 1);
         for (int y=0; y<size; y++) {
-            if (CV->Unites->x == x && CV->Unites->y == y) {
-                //⚔️  🐎  🏹  👹  🛡️  🏗️  🏇  🗡️
+            struct Units* Unit = ReturnUnit(CivS, x, y);
+            if (Unit != NULL) {
+                if (Unit->x == x && Unit->y == y) {
+                    //⚔️  🐎  🏹  👹  🛡️  🏗️  🏇  🗡️
 
-                switch(CV->Unites->type) {
-                    case 1: symb = "⚔️"; break;
-                    case 2: symb = "🐎"; break;
-                    case 3: symb = "🏹"; break;
-                    case 4: symb = "👹"; break;
-                    case 5: symb = "🛡️"; break;
-                    case 6: symb = "🏗️"; break;
-                    case 7: symb = "🏇"; break;
-                    case 8: symb = "🗡️"; break;
+                    char* symb = calloc(6, 1);
+                    switch(Unit->type) {
+                        case 1: 
+                            symb = "⚔️"; 
+                            if (world[x][y] != 4 && world[x][y] != 5 && resources[x][y] < 3) {
+                                mvprintw(row+1, RETREAT+y*title_size+additinal_retreat+3, ("%s "), symb);
+                            } else {
+                                mvprintw(row+1, RETREAT+y*title_size+additinal_retreat+1, ("%s "), symb);
+                            }
+                            break;
+                        case 2: 
+                            symb = "🐎"; 
+                            if (world[x][y] != 4 && world[x][y] != 5 && resources[x][y] < 3) {
+                                mvprintw(row+1, RETREAT+y*title_size+additinal_retreat+3, ("%s"), symb);
+                            } else {
+                                mvprintw(row+1, RETREAT+y*title_size+additinal_retreat+1, ("%s"), symb);
+                            }
+                            break;
+                        case 3: 
+                            symb = "🏹"; 
+                            if (world[x][y] != 4 && world[x][y] != 5 && resources[x][y] < 3) {
+                                mvprintw(row+1, RETREAT+y*title_size+additinal_retreat+3, ("%s"), symb);
+                            } else {
+                                mvprintw(row+1, RETREAT+y*title_size+additinal_retreat+1, ("%s"), symb);
+                            }
+                            break;
+                        case 4: 
+                            symb = "👹"; 
+                            if (world[x][y] != 4 && world[x][y] != 5 && resources[x][y] < 3) {
+                                mvprintw(row+1, RETREAT+y*title_size+additinal_retreat+3, ("%s "), symb);
+                            } else {
+                                mvprintw(row+1, RETREAT+y*title_size+additinal_retreat+1, ("%s "), symb);
+                            }
+                            break;
+                        case 5: 
+                            symb = "🛡️"; 
+                            if (world[x][y] != 4 && world[x][y] != 5 && resources[x][y] < 3) {
+                                mvprintw(row+1, RETREAT+y*title_size+additinal_retreat+3, ("%s "), symb);
+                            } else {
+                                mvprintw(row+1, RETREAT+y*title_size+additinal_retreat+1, ("%s "), symb);
+                            }
+                            break;
+                        case 6: 
+                            symb = "🏗️"; 
+                            if (world[x][y] != 4 && world[x][y] != 5 && resources[x][y] < 3) {
+                                mvprintw(row+1, RETREAT+y*title_size+additinal_retreat+3, ("%s "), symb);
+                            } else {
+                                mvprintw(row+1, RETREAT+y*title_size+additinal_retreat+1, ("%s "), symb);
+                            }
+                            break;
+                        case 7:     
+                            symb = "🏇"; 
+                            if (world[x][y] != 4 && world[x][y] != 5 && resources[x][y] < 3) {
+                                mvprintw(row+1, RETREAT+y*title_size+additinal_retreat+3, ("%s"), symb);
+                            } else {
+                                mvprintw(row+1, RETREAT+y*title_size+additinal_retreat+1, ("%s"), symb);
+                            }
+                            break;
+                        case 8: 
+                            symb = "🗡️"; 
+                            if (world[x][y] != 4 && world[x][y] != 5 && resources[x][y] < 3) {
+                                mvprintw(row+1, RETREAT+y*title_size+additinal_retreat+3, ("%s "), symb);
+                            } else {
+                                mvprintw(row+1, RETREAT+y*title_size+additinal_retreat+1, ("%s "), symb);
+                            }
+                            break;
+                    }
                 }
-
-                //symb = "⚔️";
-                if (world[x][y] != 4 && world[x][y] != 5) {
-                    mvprintw(row+1, RETREAT+y*title_size+additinal_retreat+3, ("%s "), symb);
-                } else {
-                    mvprintw(row+1, RETREAT+y*title_size+additinal_retreat+1, ("%s "), symb);
-                }
-                if (CV->next!=NULL) {
-                    CV = CV->next;
-                }
-            }
+            } 
         }
     }
 
@@ -587,8 +655,9 @@ void map(const int size, int** world, int** resources, struct Civs* CivS, WINDOW
         for (int x=0; x<size; x++) {
             int row = x*4+2;
             for (int y=0; y<size; y++) {
-                for (int i=0; i<basic_territory; i++) {
+                for (int i=0; i<CIV->countCity*basic_territory; i++) {
                     if (CIV->territory[i][0] == x && CIV->territory[i][1] == y) {
+                        if (CIV->territory[i][0] == -1 && CIV->territory[i][1] == -1) continue;
                         mvchgat(row-1, RETREAT+y*title_size+additinal_retreat-1, title_size+1, A_NORMAL, (short)CIV->numb, NULL);
                         mvchgat(row, RETREAT+y*title_size+additinal_retreat-1, title_size+1, A_NORMAL, (short)CIV->numb, NULL);
                         mvchgat(row+1, RETREAT+y*title_size+additinal_retreat-1, title_size+1, A_NORMAL, (short)CIV->numb, NULL);
@@ -643,24 +712,6 @@ void convertor(const int size, const int screen_x, const int screen_y, struct Cl
     }
 }
 
-
-void add_Combat(struct PCombat** head, struct Units* EnemyUnit) {
-    struct PCombat* newCombat = malloc(sizeof(struct PCombat));
-    if (!newCombat) return;
-    newCombat->Unit = *EnemyUnit;
-
-    if (*head == NULL) {
-        *head = newCombat;
-    } else {
-        struct PCombat* temp = *head;
-        while(temp->next != NULL) {
-            temp = temp->next;
-        }
-        temp->next = newCombat;
-        newCombat->prev = temp;
-    }
-}
-
 // !!! require improvement P.S.: a lot
 void click_on_map(const int size, int** world, int** resources, struct Civs* CivS, const int x, const int y, struct CXY* XY, WINDOW* Technologies, struct GAME* Game) {
 
@@ -672,13 +723,20 @@ void click_on_map(const int size, int** world, int** resources, struct Civs* Civ
     // Null all cordinates
     //---------------------------------------------
     
-    
     XY->build = 0;
     XY->capture_tribe = 0;
     XY->combat = 0;
     XY->movement = 0;
     XY->resources = 0;
     XY->spawn = 0;
+    XY->spawn_Archer = 0;
+    XY->spawn_Catapult = 0;
+    XY->spawn_Defender = 0;
+    XY->spawn_Knight = 0;
+    XY->spawn_Rider = 0;
+    XY->spawn_Swordsman = 0;
+    XY->spawn_Warrior = 0;
+
     XY->Technology = 2;
 
     //--------------------------------------------
@@ -694,7 +752,7 @@ void click_on_map(const int size, int** world, int** resources, struct Civs* Civ
     // Movement 
     //----------------------------
 
-
+    
     struct Units* Unit = ReturnUnit(CivS, x, y);
     if (Unit != NULL) {
         if (Unit->stat.movement > 0) {
@@ -706,20 +764,47 @@ void click_on_map(const int size, int** world, int** resources, struct Civs* Civ
             } else if (Unit->stat.movement == 3) {
                 XY->sizeof_Moves = 48;
             }
-            check_on_move(size, Unit->x, Unit->y, world, CivS, &XY->Moves, XY->sizeof_Moves);
+            int check = check_on_move(size, Unit->x, Unit->y, world, CivS, &XY->Moves, XY->sizeof_Moves);
 
             if (XY->Moves != NULL && Unit->stat.movement > 0) {
                 if ((*XY->Moves) != NULL) {
-                    TitlE->movement = true;
+                    if (check != 0) {
+                        TitlE->movement = true;
+                    }
                 }
             }
         }
     }
         
     
+    //-----------------------------
+    // Combat
+    //-----------------------------
 
-    // COMBAT
-    /////////////////
+
+    Unit = ReturnUnit(CivS, x, y);
+    if (Unit != NULL) {
+        if (Unit->combat != 0) {
+            clear_arr(&XY->Combats, XY->sizeof_Combat);
+            if (Unit->stat.range == 1) {
+                XY->sizeof_Combat = 8;
+            } else if (Unit->stat.range == 2) {
+                XY->sizeof_Combat = 24;
+            } else if (Unit->stat.range == 3) {
+                XY->sizeof_Combat = 48;
+            }
+            int check = check_on_combat(size, Unit->x, Unit->y, CivS, &XY->Combats, XY->sizeof_Combat);
+
+            if (XY->Combats != NULL && Unit->stat.range > 0) {
+                if ((*XY->Combats) != NULL) {
+                    if (check == 1) {
+                        TitlE->combat = true;
+                    }
+                }
+            }
+        }
+    }
+    
 
 
     //-----------------------------
@@ -727,7 +812,7 @@ void click_on_map(const int size, int** world, int** resources, struct Civs* Civ
     //-----------------------------
 
 
-    int Numb = ReturnNumbOfCiv(CivS, x, y, basic_territory);
+    int Numb = ReturnNumbOfCiv(CivS, x, y);
     if (Numb != -1) {
         struct Civs* CIV = ReturnCiv(CivS, Numb);
         if (CIV != NULL) {
@@ -766,7 +851,10 @@ void click_on_map(const int size, int** world, int** resources, struct Civs* Civ
 
 
     if (world[x][y] == 5) {
-        TitlE->spawn = true;
+        Unit = ReturnUnit(CivS, x, y);
+        if (Unit == NULL) {
+            TitlE->spawn = true;
+        }
     }
 
 
@@ -775,7 +863,7 @@ void click_on_map(const int size, int** world, int** resources, struct Civs* Civ
     //-----------------------------
 
     
-    Numb = ReturnNumbOfCiv(CivS, x, y, basic_territory);
+    Numb = ReturnNumbOfCiv(CivS, x, y);
     if (Numb != -1) {
         struct Civs* CIV = ReturnCiv(CivS, Numb);
         if (CIV != NULL) {
@@ -811,32 +899,42 @@ void click_on_map(const int size, int** world, int** resources, struct Civs* Civ
     }
     
 
-    // !!!
     //-----------------------------
     // Capture Tribe
     //-----------------------------
 
-
+    
     if (world[x][y] == 4) {
-        check_tribe(CivS, Game);
-        struct TribeS* Tribe = Game->Tribes;
-        while (Tribe != NULL) {
-            if (Tribe->turn == Game->turn) {
+        if (Game != NULL) {
+            check_tribe(CivS, Game, x, y);
+            struct TribeS* Tribe = Game->Tribes;
+            while (Tribe != NULL) {
+            if (Tribe->turn == 1) {
                 TitlE->capture_tribe = true;
             }
-            Tribe = Tribe->next;
+                Tribe = Tribe->next;
+            }
         }
     }
+    
 
-
-    // !!!
     //-----------------------------
     // Capture City
     //-----------------------------
 
 
-    //here must be code to identify - can player capture this city or not
-    //need already complete mechanics of capturing city
+    Unit = ReturnUnit(CivS, x, y);
+    if (Unit != NULL) {
+        struct City* CITY = ReturnCity(CivS, x, y);
+        if (CITY != NULL) {
+            if (CITY->numb != Unit->numb) {
+                check_capturing_city(CivS, Game);
+                if (CITY->siege_turn == Game->turn) {
+                    TitlE->capture_city = true;
+                }
+            }
+        }
+    }
 
 
     //-----------------------------
@@ -876,12 +974,12 @@ void click_on_map(const int size, int** world, int** resources, struct Civs* Civ
         mvwprintw(Technologies, row_of_menu+count, RETREAT, "%d. Capture Tribe", count);
         XY->capture_tribe = row_of_menu+count;
     }
-    /* Capture city
-    if (TitlE->combat == true) {
+    if (TitlE->capture_city == true) {
         count++;
-        mvprintw(row_of_menu+count, size*size+RETREAT, "%d. Combat", count);
+        mvwprintw(Technologies, row_of_menu+count, RETREAT, "%d. Capture City", count);
+        XY->capture_city = row_of_menu+count;
     }
-    */
+    
     mvwprintw(Technologies, row_of_menu+count+1, RETREAT, "+-+-+-+-+-+-+-+-+-+-+");
 
 
@@ -2120,7 +2218,7 @@ int click_action(const int size, const int x, const int y, struct CXY* XY, struc
     //-------------------------------
 
 
-    if (x >= 9 && x <= 29 && y >= 5 && y <= 13) {
+    if (x >= 9 && x <= 29 && y >= 5 && y <= 20) {
         if (XY->movement == y) {
 
             //------------------------------------
@@ -2132,10 +2230,11 @@ int click_action(const int size, const int x, const int y, struct CXY* XY, struc
                 for (int i=0; i<XY->sizeof_Moves; i++) {
                     if (XY->Moves[i] != NULL) {
                         if (XY->Moves[i][0] == 0 && XY->Moves[i][1] == 0) {
-                            if (Click->map_x != 0 && Click->map_y != 0) {
+                            if ((Click->map_x < 0 || Click->map_x > 1) || (Click->map_y < 0 || Click->map_y > 1)) {
                                 continue;
                             }
                         }
+                        if (XY->Moves[i][0] == Click->map_x && XY->Moves[i][1] == Click->map_y) continue;
                         int row = XY->Moves[i][0]*4+2;
                         mvchgat(row, RETREAT+XY->Moves[i][1]*title_size+additinal_retreat, title_size-1, A_NORMAL, 5, NULL);
                         mvchgat(row+1, RETREAT+XY->Moves[i][1]*title_size+additinal_retreat, title_size-1, A_NORMAL, 5, NULL);
@@ -2217,21 +2316,105 @@ int click_action(const int size, const int x, const int y, struct CXY* XY, struc
 
 
             if (XY->Combats != NULL) {
-                for (int i=0; i<XY->sizeof_Combat*8; i++) {
+                for (int i=0; i<XY->sizeof_Combat; i++) {
                     if (XY->Combats[i] != NULL) {
-                        if (XY->Combats[i][0] == 0 && XY->Combats[i][1] == 0) {
-                            if (Click->map_x != 0 && Click->map_y != 0) {
+                        if (XY->Combats[i][0] == 0 && XY->Combats[i][0] == 0) {
+                            if ((Click->map_x < 0 || Click->map_x > 1) || (Click->map_y < 0 || Click->map_y > 1)) {
                                 continue;
                             }
                         }
-                        int row = XY->Moves[i][0]*4+2;
+                        if (XY->Combats[i][0] == Click->map_x && XY->Combats[i][1] == Click->map_y) continue;
+
+                        int row = XY->Combats[i][0]*4 +2;
                         mvchgat(row, RETREAT+XY->Combats[i][1]*title_size+additinal_retreat, title_size-1, A_NORMAL, 5, NULL);
                         mvchgat(row+1, RETREAT+XY->Combats[i][1]*title_size+additinal_retreat, title_size-1, A_NORMAL, 5, NULL);
-                        mvchgat(row+2, RETREAT+XY->Combats[i][1]*title_size+additinal_retreat, title_size-1, A_NORMAL, 5, NULL);        
+                        mvchgat(row+2, RETREAT+XY->Combats[i][1]*title_size+additinal_retreat, title_size-1, A_NORMAL, 5, NULL);
                     }
                 }
             }
             refresh();
+
+
+            //-------------------------------
+            // Ask player for next click
+            //-------------------------------
+
+
+            wattron(Technologies, A_BOLD);
+            mvwprintw(Technologies, row_of_menu_actions, RETREAT, " Click where you want your unit to fight(showed white) ");
+            wattroff(Technologies, A_BOLD);
+            wrefresh(Technologies);
+
+
+            //----------------------------------------------------------------
+            // Write coordinate now and take next click. Then move unit
+            //----------------------------------------------------------------
+
+
+            int DX = Click->map_x;
+            int DY = Click->map_y;
+
+            while(1) {
+                int h = getch();
+                if (h == KEY_MOUSE) {
+                    if (getmouse(event) == OK) {
+                        convertor(size, event->x, event->y, Click);
+
+                        struct Units* Unit = ReturnUnit(CivS, DX, DY);
+                        if (Unit == NULL) return 0;
+
+                        struct Units* Enemy = ReturnUnit(CivS, Click->map_x, Click->map_y);
+                        if (Enemy == NULL) return 0;
+
+                        mvwprintw(Technologies, 19, RETREAT, "BEFORE BATTLE ");
+                        mvwprintw(Technologies, 20, RETREAT, " Unit: hp: %d, dmg: %d, def: %d ", Unit->stat.hp, Unit->stat.dmg, Unit->stat.def);
+                        mvwprintw(Technologies, 21, RETREAT, " Enemy: hp: %d, dmg: %d, def: %d ", Enemy->stat.hp, Enemy->stat.dmg, Enemy->stat.def);
+                        wrefresh(Technologies);
+                        sleep(2);
+
+
+                        int combat = Combat(DX, DY, Click->map_x, Click->map_y, CivS, XY->Combats, XY->sizeof_Combat, world);
+
+                        mvwprintw(Technologies, 19, RETREAT, "AFTER BATTLE ");
+                        mvwprintw(Technologies, 20, RETREAT, " Unit: hp: %d, dmg: %d, def: %d ", Unit->stat.hp, Unit->stat.dmg, Unit->stat.def);
+                        mvwprintw(Technologies, 21, RETREAT, " Enemy: hp: %d, dmg: %d, def: %d ", Enemy->stat.hp, Enemy->stat.dmg, Enemy->stat.def);
+                        wrefresh(Technologies);
+                        sleep(2);
+
+                        if (combat == 0) {
+                            wmove(Technologies, row_of_menu_actions, 0);
+                            wclrtoeol(Technologies);
+                            wattron(Technologies, A_BOLD);
+                            mvwprintw(Technologies, row_of_menu_actions, RETREAT, " Unit have no fight here! ");
+                            wattroff(Technologies, A_BOLD);
+                            wrefresh(Technologies);
+                            sleep(2);
+                        } else if (combat == 1) {
+                            mvwprintw(Technologies, row_of_menu_actions, RETREAT, " Battle success! ");
+                            
+                            wrefresh(Technologies);
+                            sleep(2);
+                        }
+                        break;
+                    }
+                }
+            }
+            wclear(Technologies);
+
+
+            //---------------------------
+            // Null coordinates
+            //---------------------------
+
+
+            XY->build = 0;
+            XY->capture_tribe = 0;
+            XY->combat = 0;
+            XY->movement = 0;
+            XY->resources = 0;
+            XY->spawn = 0;
+            XY->Technology = 2;
+
 
             return 2; // combat
 
@@ -2258,9 +2441,153 @@ int click_action(const int size, const int x, const int y, struct CXY* XY, struc
             
             wrefresh(Technologies);
             return 3; // resources
+
+
+        //---------------------
+        // Spawn
+        //---------------------
+
+
         } else if (XY->spawn == y) {
+
+
+            XY->build = 0;
+            XY->capture_tribe = 0;
+            XY->combat = 0;
+            XY->movement = 0;
+            XY->resources = 0;
+            XY->spawn = 0;  
+
+            
+            int Numb = ReturnNumbOfCiv(CivS, Click->map_x, Click->map_y);
+            if (Numb == -1) Numb = 1;
+
+            struct Civs* CIV = ReturnCiv(CivS, Numb);
+            if (CIV == NULL) return 0;
+
+
+            int count = 0; // count of actions
+            count++;
+            wclear(Technologies);
+            mvwprintw(Technologies, 2, 8, " Technologies ");
+            
+            mvwprintw(Technologies, row_of_menu, RETREAT, "+-+-+-+-+-+-+-+-+-+-+");
+            mvwprintw(Technologies, row_of_menu+count, RETREAT, "%d. Warrior", count);
+            XY->spawn_Warrior = row_of_menu+count;
+            if (CIV->Tech.branch1.Archery == true) {
+                count++;
+                mvwprintw(Technologies, row_of_menu+count, RETREAT, "%d. Archer", count);
+                XY->spawn_Archer = row_of_menu+count;
+            } 
+            if (CIV->Tech.branch1.Mathematics == true) {
+                count++;
+                mvwprintw(Technologies, row_of_menu+count, RETREAT, "%d. Catapult", count);
+                XY->spawn_Catapult = row_of_menu+count;
+            }
+            if (CIV->Tech.branch2.Riding == true) {
+                count++;
+                mvwprintw(Technologies, row_of_menu+count, RETREAT, "%d. Rider", count);
+                XY->spawn_Rider = row_of_menu+count;
+            }
+            if (CIV->Tech.branch2.Chivalry == true) {
+                count++;
+                mvwprintw(Technologies, row_of_menu+count, RETREAT, "%d. Knight", count);
+                XY->spawn_Knight = row_of_menu+count;
+            }
+            if (CIV->Tech.branch3.Strategy == true) {
+                count++;
+                mvwprintw(Technologies, row_of_menu+count, RETREAT, "%d. Defender", count);
+                XY->spawn_Defender = row_of_menu+count;
+            }
+            if (CIV->Tech.branch4.Smithery == true) {
+                count++;
+                mvwprintw(Technologies, row_of_menu+count, RETREAT, "%d. Swordsman", count);
+                XY->spawn_Swordsman = row_of_menu+count;
+            }
+    
+            mvwprintw(Technologies, row_of_menu+count+1, RETREAT, "+-+-+-+-+-+-+-+-+-+-+");
+            
+
             return 4; // spawn
 
+
+        } else if (XY->spawn_Warrior == y) {
+            int Numb = ReturnNumbOfCiv(CivS, Click->map_x, Click->map_y);
+            if (Numb == -1) Numb = 1;
+
+            struct Civs* CIV = ReturnCiv(CivS, Numb);
+            if (CIV == NULL) return 0;
+
+            new_Unit(&CIV->Unites, Numb, Click->map_x, Click->map_y, 1);
+
+            return 4;
+        } else if (XY->spawn_Archer == y) {
+
+            int Numb = ReturnNumbOfCiv(CivS, Click->map_x, Click->map_y);
+            if (Numb == -1) Numb = 1;
+
+            struct Civs* CIV = ReturnCiv(CivS, Numb);
+            if (CIV == NULL) return 0;
+
+            new_Unit(&CIV->Unites, Numb, Click->map_x, Click->map_y, 3);
+
+            return 4;
+        } else if (XY->spawn_Catapult == y) {
+
+            int Numb = ReturnNumbOfCiv(CivS, Click->map_x, Click->map_y);
+            if (Numb == -1) Numb = 1;
+
+            struct Civs* CIV = ReturnCiv(CivS, Numb);
+            if (CIV == NULL) return 0;
+
+            new_Unit(&CIV->Unites, Numb, Click->map_x, Click->map_y, 6);
+
+            return 4;
+        } else if (XY->spawn_Rider == y) {
+
+            int Numb = ReturnNumbOfCiv(CivS, Click->map_x, Click->map_y);
+            if (Numb == -1) Numb = 1;
+
+            struct Civs* CIV = ReturnCiv(CivS, Numb);
+            if (CIV == NULL) return 0;
+
+            new_Unit(&CIV->Unites, Numb, Click->map_x, Click->map_y, 2);
+
+            return 4;
+        } else if (XY->spawn_Knight == y) {
+
+            int Numb = ReturnNumbOfCiv(CivS, Click->map_x, Click->map_y);
+            if (Numb == -1) Numb = 1;
+
+            struct Civs* CIV = ReturnCiv(CivS, Numb);
+            if (CIV == NULL) return 0;
+
+            new_Unit(&CIV->Unites, Numb, Click->map_x, Click->map_y, 7);
+
+            return 4;
+        } else if (XY->spawn_Defender == y) {
+
+            int Numb = ReturnNumbOfCiv(CivS, Click->map_x, Click->map_y);
+            if (Numb == -1) Numb = 1;
+
+            struct Civs* CIV = ReturnCiv(CivS, Numb);
+            if (CIV == NULL) return 0;
+
+            new_Unit(&CIV->Unites, Numb, Click->map_x, Click->map_y, 5);
+
+            return 4;
+        } else if (XY->spawn_Swordsman == y) {
+
+            int Numb = ReturnNumbOfCiv(CivS, Click->map_x, Click->map_y);
+            if (Numb == -1) Numb = 1;
+
+            struct Civs* CIV = ReturnCiv(CivS, Numb);
+            if (CIV == NULL) return 0;
+
+            new_Unit(&CIV->Unites, Numb, Click->map_x, Click->map_y, 8);
+
+            return 4;
+        
 
         //------------------------------------
         // Build
@@ -2292,6 +2619,7 @@ int click_action(const int size, const int x, const int y, struct CXY* XY, struc
             }
 
             wrefresh(Technologies);
+            
             return 5; // build
 
 
@@ -2303,8 +2631,38 @@ int click_action(const int size, const int x, const int y, struct CXY* XY, struc
         } else if (XY->capture_tribe == y) {
 
             Capture_tribe(size, Click->map_x, Click->map_y, world, CivS, Game);
+            //mvwprintw(Technologies, 25, RETREAT, " Tribe Territory: ");
+            //for (int i=0; i<9; i++) {
+                
+            //}
+
 
             return 6; // capture tribe
+        } else if (XY->capture_city == y) {
+
+            struct City*CITY = ReturnCity(CivS, Click->map_x, Click->map_y);
+            if (CITY == NULL) return 0;
+
+            mvwprintw(Technologies, 28, RETREAT, "BEFORE CITY NUM: %d, CITY COUNT: %d", CITY->numb, CivS->countCity);
+            wrefresh(Technologies);
+            sleep(2);
+
+            struct Units* Unit = ReturnUnit(CivS, Click->map_x, Click->map_y);
+            if (Unit == NULL) return 0;
+
+            Capture_City(CivS, Click->map_x, Click->map_y, Unit->numb);
+
+            mvwprintw(Technologies, 28, RETREAT, " AFTER CITY NUM: %d, CITY COUNT: %d", CITY->numb, CivS->countCity);
+            wrefresh(Technologies);
+            sleep(2);
+
+            mvwprintw(Technologies, 30, RETREAT, " AND SEGMENTATION FAULT");
+            wrefresh(Technologies);
+            sleep(2);
+
+            Territory(CivS);
+
+            return 6; // capture city
         }
     }
 

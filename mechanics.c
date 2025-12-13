@@ -144,6 +144,8 @@ struct Units {
 // list of all cities
 struct City {
    int numb; // number of civ
+   int siege_turn;
+   bool Capture_City;
    int x;
    int y;
    int population;
@@ -221,6 +223,7 @@ struct Civs {
    int** territory;
    struct City* Cities; // list of cities under control of this civ
    int countCity;
+   int countCity_prev;
    struct Units* Unites; // list of units under control of this civ
    struct Technology Tech; // technologys this civ
    struct Civs *next; // connection with next civ
@@ -246,6 +249,7 @@ struct PTitle {
     bool spawn;
     bool build;
     bool capture_tribe;
+    bool capture_city;
 };
 
 // list of X and Y coordinate of screens features (Coordinate X and Y)
@@ -264,6 +268,7 @@ struct CXY {
     int spawn;
     int build;
     int capture_tribe;
+    int capture_city;
 
     //Technology
     int Technology;
@@ -356,6 +361,19 @@ struct CXY {
 
     int sizeof_Combat;
     int** Combats;
+
+
+    //---------------------
+    // Spawn
+    //---------------------
+
+    int spawn_Warrior;
+    int spawn_Archer;
+    int spawn_Catapult;
+    int spawn_Rider;
+    int spawn_Defender;
+    int spawn_Knight;
+    int spawn_Swordsman;
 };
 
 // list of units to hit
@@ -629,11 +647,21 @@ void resources_generation(const int size, int** resourses, int** world) {
 // Structs
 //------------------------------------------
 
+void clear_arr(int*** ARR, int size) {
+   if (!ARR || !*ARR) return;
 
-int ReturnNumbOfCiv(struct Civs* CivS, const int x, const int y, const int sizeof_territory) {
+   for (int i=0; i<size; i++) {
+      free((*ARR)[i]);
+      (*ARR)[i] = NULL;
+   }
+   free(*ARR);
+   *ARR = NULL;
+}
+
+int ReturnNumbOfCiv(struct Civs* CivS, const int x, const int y) {
    struct Civs* CV = CivS;
    while (CV != NULL) {
-      for (int i=0; i<sizeof_territory; i++) {
+      for (int i=0; i<CV->countCity*BASIC_TERRITORY; i++) {
          if (CV->territory[i][0] == x && CV->territory[i][1] == y) {
             return CV->numb;
          }
@@ -654,10 +682,27 @@ struct Civs* ReturnCiv(struct Civs* CivS, int number) {
    return NULL;
 }
 
-struct City* ReturnCity(struct City* Cit, const int x, const int y) {
+struct City* ReturnCity(struct Civs* CivS, const int x, const int y) {
+   struct Civs* CIV = CivS;
+   while (CIV != NULL) {
+      struct City* CITY = CIV->Cities;
+      while (CITY != NULL) {
+         for (int i=0; i<basic_territory; i++) {
+            if (CITY->territory[i] != NULL) {
+               if (CITY->territory[i][0] == x && CITY->territory[i][1] == y) {
+                  return CITY;
+               }
+            }
+         }
+         CITY = CITY->next;
+      }
+      CIV = CIV->next;
+   }
+   return NULL;
+   /*
    struct City* CitY = Cit;
    while (CitY != NULL) {
-      for (int i=0; i<9; i++) {
+      for (int i=0; i<basic_territory; i++) {
          if (CitY->territory[i][0] == x && CitY->territory[i][1] == y) {
             return CitY;
          }
@@ -665,6 +710,7 @@ struct City* ReturnCity(struct City* Cit, const int x, const int y) {
       CitY = CitY->next;
    }
    return NULL;
+   */
 }
 
 struct Units* ReturnUnit(struct Civs* CivS, const int x, const int y) {
@@ -683,6 +729,70 @@ struct Units* ReturnUnit(struct Civs* CivS, const int x, const int y) {
    return NULL;
 }
 
+// Add territory to City, compare with territory other CivS and expand territory of CIV
+void Expansion(struct Civs* CivS, struct Civs* CIV, struct City* CITY, const int size, const int x, const int y) {
+   if (CITY == NULL || CivS == NULL || CIV == NULL) return;
+   CITY->territory = malloc(BASIC_TERRITORY * sizeof(int*));
+   int pos = 0;
+   for (int i=0; i<BASIC_TERRITORY; i++) {
+      CITY->territory[i] = malloc(2 * sizeof(int));
+   }
+   for (int dx=x-1; dx<=x+1; dx++) {
+      for (int dy=y-1; dy<=y+1; dy++) {
+         if (pos > BASIC_TERRITORY) break;
+
+         if (dx < 0 || dx >= size || dy < 0 || dy >= size) {
+            CITY->territory[pos][0] = -1;
+            CITY->territory[pos][1] = -1;
+            pos++;
+            continue;
+         }
+         CITY->territory[pos][0] = dx;
+         CITY->territory[pos][1] = dy;
+         pos++;
+      }
+   }
+
+   struct Civs* CIVI = CivS;
+   while (CIVI != NULL) {
+      for (int i=0; i<BASIC_TERRITORY; i++) {
+         for (int j=0; j<CIVI->countCity*BASIC_TERRITORY; j++) {
+            if (CITY->territory[i][0] == CIVI->territory[j][0] && CITY->territory[i][1] == CIVI->territory[i][1]) {
+               CITY->territory[i][0] = -1;
+               CITY->territory[i][1] = -1;
+            }
+         }
+      }
+      CIVI = CIVI->next;
+   }
+
+   
+
+   int oldCountCity = CIV->countCity;
+   CIV->countCity += 1;
+   CIV->countCity_prev += 1;
+
+   int totalTerritore = CIV->countCity * BASIC_TERRITORY;
+
+   int** tmp = realloc(CIV->territory, (size_t)totalTerritore * sizeof(int*));
+   if (!tmp) return;
+
+   CIV->territory = tmp;
+
+   int start = oldCountCity * BASIC_TERRITORY;
+
+   for (int i=start; i<totalTerritore; i++) {
+      CIV->territory[i] = malloc(2 * sizeof(int));
+   }
+
+   for (int i=0; i<BASIC_TERRITORY; i++) {
+      if (CIV->territory[start+i] != NULL) {
+         CIV->territory[start+i][0] = CITY->territory[i][0];
+         CIV->territory[start+i][1] = CITY->territory[i][1];
+      }
+   }
+}
+
 void new_Unit(struct Units** head, int number, int x, int y, int type) {
    struct Units* newUnit = malloc(sizeof(struct Units));
    if (!newUnit) return;
@@ -697,52 +807,52 @@ void new_Unit(struct Units** head, int number, int x, int y, int type) {
    newUnit->prev = NULL;
    if (type == 1) {
       struct Charakteristics Warrior;
-      Warrior.name = malloc(8);
-      Warrior.name = "Warrior";
+      //Warrior.name = malloc(8);
+      //Warrior.name = "Warrior";
       Warrior.cost = 2;
       Warrior.hp = 10;
-      Warrior.dmg = 2;
+      Warrior.dmg = 3;
       Warrior.def = 2;
-      Warrior.movement = 1;
+      Warrior.movement = 2;
       Warrior.range = 1;
       newUnit->stat = Warrior;
    } else if (type == 2) {
       struct Charakteristics Rider;
-      Rider.name = malloc(6);
-      Rider.name = "Rider";
+      //Rider.name = malloc(6);
+      //Rider.name = "Rider";
       Rider.cost = 3;
       Rider.hp = 10;
-      Rider.dmg = 2;
+      Rider.dmg = 3;
       Rider.def = 1;
       Rider.movement = 2;
       Rider.range = 1;
       newUnit->stat = Rider;
    } else if (type == 3) {
       struct Charakteristics Archer;
-      Archer.name = malloc(7);
-      Archer.name = "Archer";
+      //Archer.name = malloc(7);
+      //Archer.name = "Archer";
       Archer.cost = 3;
       Archer.hp = 10;
-      Archer.dmg = 2;
+      Archer.dmg = 3;
       Archer.def = 1;
       Archer.movement = 1;
       Archer.range = 2;
       newUnit->stat = Archer;
    } else if (type == 4) {
       struct Charakteristics Giant;
-      Giant.name = malloc(6);
-      Giant.name = "Giant";
+      //Giant.name = malloc(6);
+      //Giant.name = "Giant";
       Giant.cost = 0;
       Giant.hp = 40;
-      Giant.dmg = 5;
+      Giant.dmg = 7;
       Giant.def = 4;
       Giant.movement = 1;
       Giant.range = 1;
       newUnit->stat = Giant;
    } else if (type == 5) {
       struct Charakteristics Defender;
-      Defender.name = malloc(9);
-      Defender.name = "Defender";
+      //Defender.name = malloc(9);
+      //Defender.name = "Defender";
       Defender.cost = 3;
       Defender.hp = 15;
       Defender.dmg = 1;
@@ -752,33 +862,33 @@ void new_Unit(struct Units** head, int number, int x, int y, int type) {
       newUnit->stat = Defender;
    } else if (type == 6) {
       struct Charakteristics Catapult;
-      Catapult.name = malloc(9);
-      Catapult.name = "Catapult";
+      //Catapult.name = malloc(9);
+      //Catapult.name = "Catapult";
       Catapult.cost = 8;
       Catapult.hp = 10;
-      Catapult.dmg = 4;
+      Catapult.dmg = 7;
       Catapult.def = 0;
       Catapult.movement = 1;
       Catapult.range = 3;
       newUnit->stat = Catapult;
    } else if (type == 7) {
       struct Charakteristics Knight;
-      Knight.name = malloc(7);
-      Knight.name = "Knight";
+      //Knight.name = malloc(7);
+      //Knight.name = "Knight";
       Knight.cost = 8;
       Knight.hp = 10;
-      Knight.dmg = 4; // 3.5
+      Knight.dmg = 6; // 3.5
       Knight.def = 1;
       Knight.movement = 3;
       Knight.range = 1;
       newUnit->stat = Knight;
    } else if (type == 8) {
       struct Charakteristics Swordsman;
-      Swordsman.name = malloc(10);
-      Swordsman.name = "Swordsman";
+      //Swordsman.name = malloc(10);
+      //Swordsman.name = "Swordsman";
       Swordsman.cost = 5;
       Swordsman.hp = 15;
-      Swordsman.dmg = 3;
+      Swordsman.dmg = 7;
       Swordsman.def = 3;
       Swordsman.movement = 1;
       Swordsman.range = 1;
@@ -800,7 +910,30 @@ void new_Unit(struct Units** head, int number, int x, int y, int type) {
    newUnit->prev = temp;
 }
 
-void new_City(struct Civs* CIV, struct City** head, int number, int x, int y, int size) {
+// Delete Unit
+void delete_Unit(struct Civs* CivS, const int x, const int y) {
+   if (CivS == NULL) return;
+
+   struct Units* Unit = ReturnUnit(CivS, x, y);
+   if (Unit == NULL) return;
+
+   struct Civs* CIV = ReturnCiv(CivS, Unit->numb);
+   if (CIV == NULL) return;
+
+   if (Unit->prev) {
+      Unit->prev->next = Unit->next;
+   } else {
+      CIV->Unites = Unit->next;
+   }
+
+   if (Unit->next) {
+      Unit->next->prev = Unit->prev;
+   }
+
+   free(Unit);
+}
+
+void new_City(struct Civs* CivS, struct Civs* CIV, struct City** head, int number, int x, int y, int size) {
    struct City* newCity = malloc(sizeof(struct City));
    if (!newCity) return;
    memset(newCity, 0, sizeof(struct City));
@@ -811,42 +944,8 @@ void new_City(struct Civs* CIV, struct City** head, int number, int x, int y, in
    newCity->growth = 1;
    newCity->population = 0;
    newCity->production = 1;
-   newCity->territory = malloc(BASIC_TERRITORY * sizeof(int*));
-   int pos = 0;
-   for (int i=0; i<BASIC_TERRITORY; i++) {
-      newCity->territory[i] = malloc(2 * sizeof(int));
-   }
-   for (int dx=x-1; dx<=x+1; dx++) {
-      for (int dy=y-1; dy<=y+1; dy++) {
-         if (dx < 0 || dx >= size || dy < 0 || dy >= size) continue;
-         newCity->territory[pos][0] = dx;
-         newCity->territory[pos][1] = dy;
-         pos++;
-      }
-   }
-
-   int oldCountCity = CIV->countCity;
-   CIV->countCity += 1;
-
-   int totalTerritore = CIV->countCity * BASIC_TERRITORY;
-
-   int** tmp = realloc(CIV->territory, (size_t)totalTerritore * sizeof(int*));
-   if (!tmp) return;
-
-   CIV->territory = tmp;
-
-   int start = oldCountCity * BASIC_TERRITORY;
-
-   for (int i=start; i<totalTerritore; i++) {
-      CIV->territory = malloc(2 * sizeof(int));
-   }
-
-   for (int i=0; i<BASIC_TERRITORY; i++) {
-      if (CIV->territory[start+i] != NULL) {
-         CIV->territory[start+i][0] = newCity->territory[i][0];
-         CIV->territory[start+i][1] = newCity->territory[i][1];
-      }
-   }
+   CIV->income += newCity->production;
+   Expansion(CivS, CIV, newCity, size, x, y);
 
    newCity->next = NULL;
    newCity->prev = NULL;
@@ -877,16 +976,21 @@ void new_Civ(struct Civs** head, int number, int x, int y, int size) {
    newCiv->Unites = NULL;
    newCiv->score = 0;
    newCiv->stars = 5;
-   newCiv->territory = malloc(BASIC_TERRITORY * sizeof(int*));
-   for (int i=0; i<BASIC_TERRITORY; i++) {
-      newCiv->territory[i] = malloc(2 * sizeof(int));
-   }
+   newCiv->countCity = 0;
+   newCiv->countCity_prev = 0;
 
 
    //---------------------------------------------
    // Technologies
    //---------------------------------------------
 
+   newCiv->Tech.branch4.Climbing = true;
+   newCiv->Tech.branch1.Archery = true;
+   newCiv->Tech.branch1.Mathematics = true;
+   newCiv->Tech.branch2.Riding = true;
+   newCiv->Tech.branch2.Chivalry = true;
+   newCiv->Tech.branch3.Strategy = true;
+   newCiv->Tech.branch4.Smithery = true;
 
    /*
    newCiv->Tech.Tier1 = 5;
@@ -910,7 +1014,8 @@ void new_Civ(struct Civs** head, int number, int x, int y, int size) {
    }
 
    // Add capital to CIV and basic Unit
-   new_City(newCiv, &newCiv->Cities, number, x, y, size);
+   struct Civs* CivS = *head;
+   new_City(CivS, newCiv, &newCiv->Cities, number, x, y, size);
    new_Unit(&newCiv->Unites, number, x, y, 1);
 }
 
@@ -923,7 +1028,7 @@ void civs_creation(const int size, int** world, struct Civs** CivS, int CIV) {
             struct Civs* temp = *CivS;
             while(temp) {
                temp->Cities->production = 2;
-               temp->income = 2;
+               temp->income = temp->Cities->production;
                temp = temp->next;
             }
             number++;
@@ -936,6 +1041,49 @@ void civs_creation(const int size, int** world, struct Civs** CivS, int CIV) {
    }
 }
 
+// add all Cities territory to territory CIV
+void Territory(struct Civs* CivS) {
+   if (CivS == NULL) return;
+
+   struct Civs* CIV = CivS;
+   while (CIV != NULL) {
+      int sizeofTerritory = CIV->countCity*basic_territory;
+      int pos = 0;
+
+      clear_arr(&CIV->territory, CIV->countCity_prev*basic_territory);
+
+      //int** territory = malloc((size_t)sizeofTerritory * sizeof(int*));
+      //if (!territory) return;
+
+      CIV->territory = malloc((size_t)sizeofTerritory * sizeof(int*)); //territory;
+      if (!CIV->territory) return;
+      
+      for (int i=0; i<sizeofTerritory; i++) {
+         CIV->territory[i] = calloc(2, sizeof(int));
+         if (!CIV->territory[i]) {
+            for (int j=0; j<i; j++) {
+               free(CIV->territory[j]);
+            }
+            free(CIV->territory);
+            CIV->territory = NULL;
+            return;
+         }
+      }
+
+      struct City* CITY = CIV->Cities;
+      while (CITY != NULL) {
+         for (int j=0; j<basic_territory; j++) {
+            if (CITY->territory[j] != NULL) {
+               CIV->territory[pos][0] = CITY->territory[j][0];
+               CIV->territory[pos][1] = CITY->territory[j][1];
+               pos++;
+            }
+         }
+         CITY = CITY->next;
+      }
+      CIV = CIV->next;
+   }
+}
 
 //------------------------
 // Tribes
@@ -947,10 +1095,12 @@ void tribes_write(const int size, int** world, struct TribeS** head) {
       for (int y=0; y<size; y++) {
          if (world[x][y] == 4) {
             struct TribeS* newTribe = malloc(sizeof(struct TribeS));
+            if (!newTribe) return;
             memset(newTribe, 0, sizeof(struct TribeS));
 
             newTribe->x = x;
             newTribe->y = y;
+            newTribe->turn = 0;
             newTribe->next = NULL;
             newTribe->prev = NULL;
 
@@ -968,7 +1118,7 @@ void tribes_write(const int size, int** world, struct TribeS** head) {
 }
 
 // Check: does any unit on tribe
-void check_tribe(struct Civs* CivS, struct GAME* Game) {
+void check_tribe(struct Civs* CivS, struct GAME* Game, const int x, const int y) {
    struct TribeS* T = Game->Tribes;
    while (T != NULL) {
       if (T->turn != 0) {
@@ -977,21 +1127,43 @@ void check_tribe(struct Civs* CivS, struct GAME* Game) {
       T = T->next;
    }
 
-   struct Civs* CIV = CivS;
-   while (CIV != NULL) {
-      struct Units* Unit = CIV->Unites;
-      while (Unit != NULL) {
-         struct TribeS* Tribe = Game->Tribes;
-         while (Tribe != NULL) {
-            if (Unit->x == Tribe->x && Unit->y == Tribe->y) {
-               Tribe->turn = Game->turn;
-            }
-            Tribe = Tribe->next;
-         }
-         Unit = Unit->next;
+   struct Units* Unit = ReturnUnit(CivS, x, y);
+   if (Unit == NULL) return;
+
+   struct TribeS* Tribe = Game->Tribes;
+   if (Tribe == NULL) return;
+
+   while (Tribe != NULL) {
+      if (Unit->x == Tribe->x && Unit->y == Tribe->y) {
+         Tribe->turn = Game->turn;
       }
-      CIV = CIV->next;
+      Tribe = Tribe->next;
    }
+}
+
+void remove_tribe(struct GAME* Game, const int x, const int y) {
+   struct TribeS* Tribe = Game->Tribes;
+
+   while (Tribe != NULL) {
+      if (Tribe->x == x && Tribe->y == y) {
+         break;
+      }
+      Tribe = Tribe->next;
+   }
+   if (Tribe == NULL) return;
+
+   if (Tribe->prev) {
+      Tribe->prev->next = Tribe->next;
+   } else {
+      Game->Tribes = Tribe->next;
+   }
+
+   if (Tribe->next) {
+      Tribe->next->prev = Tribe->prev;
+   }
+
+   free(Tribe);
+   
 }
 
 // Delete tribe from map and add this as zero City to Civ, which unit is here
@@ -1008,7 +1180,9 @@ void Capture_tribe(const int size, const int x, const int y, int** world, struct
 
    world[x][y] = 5;
    //Unit->stat.movement = 0;
-   new_City(CIV, &CIV->Cities, Unit->numb, x, y, size);
+   new_City(CivS, CIV, &CIV->Cities, Unit->numb, x, y, size);
+
+   remove_tribe(Game, x, y);
 }
 
 //-----------------------------------------------
@@ -1211,19 +1385,9 @@ void Research(struct Civs* CivS, int tech) {
 //------------------------------------------------
 
 
-void clear_arr(int*** Moves, int size) {
-   if (Moves == NULL || *Moves == NULL) return;
-
-   for (int i=0; i<size; i++) {
-      free((*Moves)[i]);
-      (*Moves)[i] = NULL;
-   }
-   free(*Moves);
-   *Moves = NULL;
-}
-
-void check_on_move(const int size, const int x, const int y, int** world, struct Civs* CivS, int*** Moves, int sizeof_Moves) {
+int check_on_move(const int size, const int x, const int y, int** world, struct Civs* CivS, int*** Moves, int sizeof_Moves) {
    *Moves = calloc((size_t)sizeof_Moves, sizeof(int*));
+   if (!(*Moves)) return 0;
 
    for (int i=0; i<sizeof_Moves; i++) {
       (*Moves)[i] = NULL;
@@ -1238,24 +1402,25 @@ void check_on_move(const int size, const int x, const int y, int** world, struct
             }
             free(*Moves);
             *Moves = NULL;
-            return;
+            return 0;
          }
       }
    }
 
    struct Units* Unit = ReturnUnit(CivS, x, y);
-   if (Unit == NULL) return;
+   if (Unit == NULL) return 0;
 
    int pos = 0;
 
    for (int dx = x-Unit->stat.movement; dx <= x+Unit->stat.movement; dx++) {
       for (int dy = y-Unit->stat.movement; dy <= y+Unit->stat.movement; dy++) {
-         if (pos >= sizeof_Moves) {
-            return;
-         }
-         if (dx < 0 || dx >= size || dy < 0 || dy >= size) {
-            continue;
-         }
+         if (pos >= sizeof_Moves) return 1;
+         if (dx == x && dy == y) continue;
+         if (dx < 0 || dx >= size || dy < 0 || dy >= size) continue;
+
+         struct Units* UN = ReturnUnit(CivS, dx, dy);
+         if (UN != NULL) continue;
+
          switch(world[dx][dy]) {
             case 0:
                break;
@@ -1282,10 +1447,20 @@ void check_on_move(const int size, const int x, const int y, int** world, struct
                pos++;
                break;
             case 5:
+               struct Units* Enemy = ReturnUnit(CivS, dx, dy);
+               if (Enemy == NULL) {
+                  (*Moves)[pos][0] = dx;
+                  (*Moves)[pos][1] = dy;
+                  pos++;
+               }
                break;
          }
       }
    }
+   if (pos != 0) {
+      return 1;
+   }
+   return 0;
 }
 
 int Movement(const int x1, const int y1, const int x2, const int y2, struct Civs* CivS, int** Moves, int sizeof_Moves) {
@@ -1298,7 +1473,7 @@ int Movement(const int x1, const int y1, const int x2, const int y2, struct Civs
       for (int i=0; i<sizeof_Moves; i++) {
          if (Moves[i] != NULL) {
             if (Moves[i][0] == 0 && Moves[i][1] == 0) {
-               if (x1 != 0 && y1 != 0) {
+               if ((x1 < 0 || x1 > 1) || (y1 < 0 || y1 > 1)) {
                   continue;
                }
             }
@@ -1332,66 +1507,143 @@ int Movement(const int x1, const int y1, const int x2, const int y2, struct Civs
    return 0;
 }
 
+int check_on_combat(const int size, const int x, const int y, struct Civs* CivS, int*** Combats, int sizeof_Combats) {
+   *Combats = calloc((size_t)sizeof_Combats, sizeof(int*));
+   if (!(*Combats)) return 0;
 
-// in process
-void check_on_combat(const int size, const int x, const int y, struct Civs* CivS, int*** Combats, int sizeof_Combats) {
-   struct Units* Unit = ReturnUnit(CivS, x, y);
-   int Numb = CivS->numb;
-   if (Combats!=NULL && *Combats!=NULL) {
-      for (int i=0; i<sizeof_Combats*8; i++) {
-         if ((*Combats)[i] != NULL) {
-            free((*Combats)[i]);
-            (*Combats)[i] = NULL;
+   for (int i=0; i<sizeof_Combats; i++) {
+      (*Combats)[i] = NULL;
+   }
+
+   for (int i=0; i<sizeof_Combats; i++) {
+      if ((*Combats)[i] == NULL) {
+         (*Combats)[i] = calloc(2, sizeof(int));
+         if (!(*Combats)[i]) {
+            for (int j=0; j<i; j++) {
+               free((*Combats)[j]);
+            } 
+            free(*Combats);
+            *Combats = NULL;
+            return 0;
          }
       }
    }
-
-   int** newCombats = realloc(*Combats, (size_t)(sizeof_Combats * 8) * sizeof(int*));
-   *Combats = newCombats;
-
-   if (Unit->combat == 0) {
-      *Combats = NULL;
-      return;
-   }
-
-   for (int i=0; i<sizeof_Combats * 8; i++) {
-      (*Combats)[i] = malloc(2 * sizeof(int));
-   }
+   
+   struct Units* Unit = ReturnUnit(CivS, x ,y);
+   if (Unit == NULL) return 0;
 
    int pos = 0;
 
    for (int dx = x-Unit->stat.range; dx <= x+Unit->stat.range; dx++) {
       for (int dy = y-Unit->stat.range; dy <= y+Unit->stat.range; dy++) {
-         if (dx < 0 || dx >= size || dy < 0 || dy >= size || dx == x || dy == y) {
-            continue;
+         if (pos >= sizeof_Combats) return 1;
+         if (dx == x && dy == y) continue;
+         if (dx < 0 || dx >= size || dy < 0 || dy >= size) continue;
+
+         struct Units* Enemy = ReturnUnit(CivS, dx, dy);
+         if (Enemy == NULL) continue;
+
+         if (Enemy->numb == Unit->numb) continue;
+
+         (*Combats)[pos][0] = dx;
+         (*Combats)[pos][1] = dy;
+         pos++;
+      }
+   }
+   if (pos != 0) {
+      return 1;
+   }
+   return 0;
+}
+
+int defence(struct Units* Unit, struct Civs* CivS, int** world) {
+   if (!Unit) return 0;
+
+   struct Civs* CIV = ReturnCiv(CivS, Unit->numb);
+   if (CIV == NULL) return 0;
+
+   int defence = Unit->stat.def;
+
+   switch(world[Unit->x][Unit->y]) {
+      case 0:
+         if (CIV->Tech.branch5.Aquatism == true) {
+            defence += 1;
          }
+         break;
+      case 1:
+         break;
+      case 2:
+         if (CIV->Tech.branch1.Archery == true) {
+            defence += 1;
+         }
+         break;
+      case 3:
+         if (CIV->Tech.branch4.Climbing == true) {
+            defence += 1;
+         }
+      case 4:
+         break;
+      case 5:
+         defence += 1;
+         break;
+   }
+   return defence;
+}
 
-         struct Civs* Enemy = CivS;
-         while (Enemy != NULL) {
-            if (Enemy->numb == Numb) {
-               Enemy = Enemy->next;
-               continue;
-            }
+// If all good - make combat between units, return 1, else return 0
+int Combat(const int x1, const int y1, const int x2, const int y2, struct Civs* CivS, int** Combat, int sizeof_Combats, int** world) {
+   if (Combat == NULL) return 0;
 
-            struct Units* EnemyUN = ReturnUnit(Enemy, dx, dy);
-            if (EnemyUN != NULL) {
-               if (EnemyUN->x == dx && EnemyUN->y == dy) {
-                  (*Combats)[pos][0] = dx;
-                  (*Combats)[pos][1] = dy;
-                  pos++;
-                  break;
+   struct Units* Unit = ReturnUnit(CivS, x1, y1);
+   if (Unit == NULL) return 0;
+
+   struct Units* Enemy = ReturnUnit(CivS, x2, y2);
+   if (Enemy == NULL) return 0;
+
+   if (Combat != NULL) {
+      for (int i=0; i<sizeof_Combats; i++) {
+         if (Combat[i] != NULL) {
+            if (Combat[i][0] == 0 && Combat[i][1] == 0) {
+               if ((x1 < 0 || x1 > 1) || (y1 < 0 || y1 > 1)) {
+                  continue;
                }
-            } else {
-               break;
             }
-            
 
-            Enemy = Enemy->next;
+            if (Combat[i][0] == Enemy->x && Combat[i][1] == Enemy->y) {
+
+               int EHp = Enemy->stat.hp;
+               int EDef = defence(Enemy, CivS, world);
+               Enemy->stat.hp = EHp - Unit->stat.dmg + EDef;
+               if (Enemy->stat.hp >= EHp) {
+                  Enemy->stat.hp = EHp -1;
+               }
+
+               Unit->stat.hp = Unit->stat.hp - Enemy->stat.def;
+
+               /*
+               if (Unit->type != 7) {
+                  Unit->combat = 0;
+               }
+
+               if (Unit->type != 2 && Unit->type != 7) {
+                  Unit->stat.movement = 0;
+               }
+               */
+
+               if (Enemy->stat.hp <= 0) {
+                  delete_Unit(CivS, Enemy->x, Enemy->y);
+               }
+               if (Unit->stat.hp <= 0) {
+                  delete_Unit(CivS, Unit->x, Unit->y);
+               }
+
+               return 1;
+            }
          }
       }
    }
+   return 0;
 }
-
 
 //-------------------------------
 // Resources
@@ -1403,13 +1655,13 @@ int TakeResource(const int x, const int y, int** resources, struct Civs* CivS) {
       return 0;
    }
 
-   int Numb = ReturnNumbOfCiv(CivS, x, y, basic_territory);
+   int Numb = ReturnNumbOfCiv(CivS, x, y);
    if (Numb == -1) return 1;
 
    struct Civs* Civ = ReturnCiv(CivS, Numb);
    if (Civ == NULL) return 2;
 
-   struct City* CitY = ReturnCity(Civ->Cities, x, y);
+   struct City* CitY = ReturnCity(CivS, x, y);
    if (CitY == NULL) return 3;
 
    if (resources[x][y] == 1 || resources[x][y] == 3) {
@@ -1425,13 +1677,13 @@ int TakeResource(const int x, const int y, int** resources, struct Civs* CivS) {
 
 
 int Building(const int x, const int y, int** world, int** resources, struct Civs* CivS) {
-   int Numb = ReturnNumbOfCiv(CivS, x, y, basic_territory);
+   int Numb = ReturnNumbOfCiv(CivS, x, y);
    if (Numb == -1) return 1;
 
    struct Civs* Civ = ReturnCiv(CivS, Numb);
    if (Civ == NULL) return 2;
 
-   struct City* CitY = ReturnCity(Civ->Cities, x, y);
+   struct City* CitY = ReturnCity(CivS, x, y);
    if (CitY == NULL) return 3;
 
    if (world[x][y] == 0) {
@@ -1453,3 +1705,104 @@ int Building(const int x, const int y, int** world, int** resources, struct Civs
    }
    return 0;
 }
+
+
+//---------------------------
+// Capture City
+//---------------------------
+
+// Check: does any city under siege
+void check_capturing_city(struct Civs* CivS, struct GAME* Game) {
+   if (CivS == NULL) return;
+
+   struct Civs* CIV = CivS;
+   if (CIV == NULL) return;
+
+   while (CIV != NULL) {
+      struct City* CITY = CIV->Cities;
+      while (CITY != NULL) {
+         CITY->siege_turn = 0;
+         CITY->Capture_City = false;
+
+         CITY = CITY->next;
+      }
+      CIV = CIV->next;
+   }
+
+   CIV = CivS;
+   while (CIV != NULL) {
+      struct City* CITY = CIV->Cities;
+      while (CITY != NULL) {
+         struct Units* Unit = ReturnUnit(CivS, CITY->x, CITY->y);
+         if (Unit != NULL) {
+            if (Unit->numb != CITY->numb) {
+               CITY->siege_turn = Game->turn;
+            }
+         }
+         CITY = CITY->next;
+      }
+      CIV = CIV->next;
+   }
+}
+
+// Remove city from CIV1 and Add to CIV2
+void Capture_City(struct Civs* CivS, const int x, const int y, const int NumCIV2) {
+   if (CivS == NULL) return;
+   
+   struct City* CITY = ReturnCity(CivS, x, y);
+   if (CITY == NULL) return;
+
+   int NumCIV1 = ReturnNumbOfCiv(CivS, x, y);
+   if (NumCIV1 == -1) return;
+
+   struct Civs* CIV1 = ReturnCiv(CivS, NumCIV1);
+   if (CIV1 == NULL) return;
+
+   struct Civs* CIV2 = ReturnCiv(CivS, NumCIV2);
+   if (CIV2 == NULL) return;
+
+   if (CITY->prev) {
+      CITY->prev->next = CITY->next;
+   } else {
+      CIV1->Cities = CITY->next;
+   }
+
+   if (CITY->next) {
+      CITY->next->prev = CITY->prev;
+   }
+
+
+   struct City* CitiesCV2 = CIV2->Cities;
+   if (CitiesCV2 == NULL) return;
+
+   while (CitiesCV2->next != NULL) {
+      CitiesCV2 = CitiesCV2->next;
+   }
+
+   CitiesCV2->next = CITY;
+   CITY->prev = CitiesCV2;
+
+   CITY->numb = NumCIV2;
+   CIV1->countCity -= 1;
+   CIV2->countCity += 1;
+   
+   /*
+   int countOfCityCV = 0;
+   struct City* CTCV1 = CIV1->Cities;
+   while (CTCV1 != NULL) {
+      countOfCityCV++;
+      CTCV1 = CTCV1->next;
+   }
+   CIV1->countCity = countOfCityCV;
+
+   countOfCityCV = 0;
+   struct City* CTCV2 = CIV2->Cities;
+   while (CTCV2 != NULL) {
+      countOfCityCV++;
+      CTCV2 = CTCV2->next;
+   }
+   CIV2->countCity = countOfCityCV;
+   //CIV2->countCity += 1;
+   */
+}
+
